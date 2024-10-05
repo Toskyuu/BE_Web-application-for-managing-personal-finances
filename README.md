@@ -9,10 +9,12 @@ ___
 2. [Nazewnictwo](docs/naming-conventions.md)
 3. [Wymagania](docs/requirements.md)
 
+___
 ### Biblioteki
 Wszystkie biblioteki znajdują się w pliku `requirements.txt`
 Jeśli chcesz zainstalować wszystkie biblioteki lokalnie, użyj poniższej komendy:
 
+___
 ### MinIO
 Po uruchomieniu aplikacji w dockerze, a jeszcze przed testowaniem jej trzeba dodać do MinIO
 odpowiednie:
@@ -27,7 +29,7 @@ Aby dodać te klucze do MinIO:
    - password: minioadminpass
 3. Przejdź do Access Keys -> Create access key i dodaj wartości jak wyżej.
 
-
+___
 ## 1. Docker
 **Rozwiązanie zalecane**
 1. Zainstaluj Docker Desktop
@@ -46,6 +48,7 @@ W przypadku zmian w docker-compose.yml, aby zaktualizować kontenery, użyj poni
 ```shell
 docker compose up --build
 ```
+___
 ## 2. Lokalnie
 1. Zainstaluj Python 3.11
 2. Zainstaluj wszystkie biblioteki z pliku `requirements.txt`:
@@ -59,11 +62,13 @@ uvicorn main:app --reload
 4. Aplikacja będzie dostępna pod adresem `http://localhost:8000`
 5. Redisa i Postgresa można uruchomić lokalnie lub z Dockerem
 
+___
 ## 3. DBeaver
 - Database -> New Database Connection -> PostgreSQL
 - Database: sumy, Username: postgres, Pass: sumysecretpasswd
 - Test Connection -> Finish
 
+___
 ## 4. SQL
 Nie używamy już sqla, bo jest dla lamusy. Od tego jest ORM.
 Jeśli robimy jakąś zmianę w modelu, to trzeba zrobić migrację:
@@ -86,10 +91,20 @@ alembic downgrade -1
 
 Jeśli dodajecie nowy model, to musicie go dodać do `database/__init__.py` tak jak pozostałe modele.
 
+___
 ## API
 Terminal:
 
 W razie problemów [tutorial](https://fastapi.tiangolo.com/tutorial/first-steps/)
 
 [Testowanie API - Swagger](http://127.0.0.1:8000/docs)
+
+
+___
+## KONTRIBUTING
+1. Stwórz branch o nazwie `feature/NAZWA_FEATURE`
+2. Zaimplementuj feature
+3. Stwórz Pull Request do brancha `develop`
+4. Oczekuj na review
+5. Po zatwierdzeniu Pull Requesta, zmerguj go do brancha `develop`
 
