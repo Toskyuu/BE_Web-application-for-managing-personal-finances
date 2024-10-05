@@ -1,5 +1,14 @@
 # BE_Web-application-for-managing-personal-finances
 
+## OPIS
+Aplikacja backendowa do pracy inżynierskiej. 
+
+___
+## SPIS TREŚCI
+1. [Struktura](docs/structure.md)
+2. [Nazewnictwo](docs/naming-conventions.md)
+3. [Wymagania](docs/requirements.md)
+
 ### Biblioteki
 Wszystkie biblioteki znajdują się w pliku `requirements.txt`
 Jeśli chcesz zainstalować wszystkie biblioteki lokalnie, użyj poniższej komendy:
