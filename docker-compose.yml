@@ -11,18 +11,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  minio:
-    image: minio/minio:latest
-    environment:
-      MINIO_ROOT_USER: miniouser
-      MINIO_ROOT_PASSWORD: miniopassword
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-
   app:
     build: .
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -32,8 +20,6 @@ services:
       - "8000:8000"
     depends_on:
       - db
-      - minio
 
 volumes:
   postgres_data:
-  minio_data:
