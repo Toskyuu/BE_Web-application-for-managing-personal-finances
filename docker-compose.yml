@@ -1,17 +1,21 @@
+name: BE-Web-Application-For-Managing-Personal-Finance
+
+x-backend: &backend
+  env_file:
+    - path: .env
+
 
 services:
   db:
-    image: postgres:15.2
-    environment:
-      POSTGRES_USER: postgresuser
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: postgres
+    <<: *backend
+    image: postgres:latest
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   app:
+    <<: *backend
     build: .
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
