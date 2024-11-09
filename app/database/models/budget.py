@@ -12,6 +12,5 @@ class Budget(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     month_year = Column(Date, nullable=False)
 
-
     category = relationship("Category", back_populates="budgets")
     user = relationship("User", back_populates="budgets")
