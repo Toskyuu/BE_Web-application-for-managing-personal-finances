@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
+import jwt
 from passlib.context import CryptContext
 
 import os
@@ -36,5 +36,7 @@ def verify_token(token: str):
         if username is None:
             raise ValueError("Token nie zawiera poprawnego sub")
         return username
-    except JWTError:
-        raise ValueError("Błędny token lub token wygasł")
+    except jwt.ExpiredSignatureError:
+        raise ValueError("Token wygasł")
+    except jwt.InvalidTokenError:
+        raise ValueError("Błędny token")

@@ -15,7 +15,7 @@ class UserLogin(BaseModel):
     password: str
 
 class User(UserBase):
-    id: int
+    user_id: int
     is_mail_verified: bool
     class Config:
         orm_mode = True
