@@ -1,5 +1,3 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
 from app.database.repositories.user import create_user
 from app.api.schemas.User import UserCreate, User as UserSchema
 from app.database.models.user import User as UserModel
@@ -9,7 +7,6 @@ from app.database.postgres_utils import get_db
 from app.services.auth import verify_password, create_access_token
 from app.database.repositories.user import get_user_by_email
 from fastapi.security import OAuth2PasswordRequestForm
-
 
 router = APIRouter()
 
@@ -22,6 +19,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
     new_user = create_user(db, user.username, user.email, user.password)
     return new_user
+
 
 @router.post("/login")
 def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
