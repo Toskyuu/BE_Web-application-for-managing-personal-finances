@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum
+from sqlalchemy.orm import relationship, validates
 from app.database.postgres_utils import Base
+from app.database.models.enums import AccountType
 
 
 class Account(Base):
@@ -8,9 +9,14 @@ class Account(Base):
 
     account_id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    balance = Column(Float, default=0.00, nullable=False)
-    type = Column(String, default="checking", nullable=False)
+    type = Column(Enum(AccountType), nullable=False)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    initial_balance = Column(Float, nullable=False, default=0.0)
+    balance = Column(Float, nullable=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.balance = self.initial_balance
 
     user = relationship("User", back_populates="accounts")
     transactions = relationship("Transaction", back_populates="account")

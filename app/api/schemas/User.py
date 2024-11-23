@@ -14,9 +14,10 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+
 class User(UserBase):
     user_id: int
     is_mail_verified: bool
-    class Config:
-        orm_mode = True
 
+    class Config:
+        from_attributes = True
