@@ -23,7 +23,6 @@ class AccountRepository:
 
     @staticmethod
     def update_account_name(db: Session, account_id: int, account_name_update: AccountNameUpdate) -> Account:
-        # Update account name
         account = db.query(Account).filter(Account.account_id == account_id).first()
         if account:
             account.name = account_name_update.name

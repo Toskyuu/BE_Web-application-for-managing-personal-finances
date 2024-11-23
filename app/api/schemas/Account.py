@@ -29,6 +29,8 @@ class Account(AccountBase):
     account_id: int
     user_id: int
     balance: Optional[float] = None
+    type: AccountType
+    initial_balance: Optional[float] = None
 
     class Config:
         from_attributes = True

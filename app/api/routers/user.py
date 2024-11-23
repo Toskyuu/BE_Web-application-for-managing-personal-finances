@@ -1,11 +1,10 @@
-from app.database.repositories.user import create_user
 from app.api.schemas.User import UserCreate, User as UserSchema
 from app.database.models.user import User as UserModel
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database.postgres_utils import get_db
 from app.services.auth import verify_password, create_access_token
-from app.database.repositories.user import get_user_by_email
+from app.database.repositories.user import UserRepository
 from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
@@ -17,13 +16,13 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email już używany")
 
-    new_user = create_user(db, user.username, user.email, user.password)
+    new_user = UserRepository.create_user(db, user.username, user.email, user.password)
     return new_user
 
 
 @router.post("/login")
 def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    db_user = get_user_by_email(db, user.username)  # 'username' w formularzu OAuth2 to email
+    db_user = UserRepository.get_user_by_email(db, user.username)  # 'username' w formularzu OAuth2 to email
     if db_user is None:
         raise HTTPException(status_code=404, detail="Użytkownik nie istnieje")
 
