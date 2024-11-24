@@ -16,12 +16,11 @@ class CategoryUpdate(BaseModel):
     description: Optional[str] = None
 
 
-
-
 class Category(CategoryBase):
     category_id: int
     name: str
     description: str
+    user_id: int
 
     class Config:
         from_attributes = True

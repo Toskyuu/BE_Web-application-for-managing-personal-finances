@@ -1,9 +1,9 @@
 import datetime
 
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Enum
 from sqlalchemy.orm import relationship
 from app.database.postgres_utils import Base
-from app.database.models.category import Category
+from app.database.models.enums import TransactionType
 
 
 class Transaction(Base):
@@ -13,8 +13,17 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     description = Column(String)
     date = Column(Date, default=datetime.date.today)
-    account_id = Column(Integer, ForeignKey("accounts.account_id"), nullable=False)
+    to_account_id = Column(Integer, ForeignKey("accounts.account_id"))
+    from_account_id = Column(Integer, ForeignKey("accounts.account_id"))
     category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    type = Column(Enum(TransactionType), nullable=False)
 
-    account = relationship("Account", back_populates="transactions")
+    to_account = relationship(
+        "Account", foreign_keys=[to_account_id], back_populates="transactions_to"
+    )
+    from_account = relationship(
+        "Account", foreign_keys=[from_account_id], back_populates="transactions_from"
+    )
     category = relationship("Category", back_populates="transactions")
+    user = relationship("User", back_populates="transactions")

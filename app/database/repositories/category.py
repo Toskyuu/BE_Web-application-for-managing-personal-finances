@@ -23,11 +23,12 @@ class CategoryRepository:
     @staticmethod
     def update_category(db: Session, category_id: int, category_update: CategoryUpdate) -> Category:
         category = db.query(Category).filter(Category.category_id == category_id).first()
-        if category:
-            category.name = category_update.name
-            category.description = category_update.description
-            db.commit()
-            db.refresh(category)
+        updated_category = category_update.model_dump(exclude_unset=True)
+        for key, value in updated_category.items():
+            setattr(category, key, value)
+
+        db.commit()
+        db.refresh(category)
         return category
 
     @staticmethod

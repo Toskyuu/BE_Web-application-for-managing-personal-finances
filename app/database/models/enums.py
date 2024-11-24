@@ -6,3 +6,8 @@ class AccountType(str, enum.Enum):
     SAVINGS = "Oszczędnościowe"
     WALLET = "Portfel"
     PIGGY_BANK = "Skarbonka"
+
+class TransactionType(str, enum.Enum):
+    INCOME = "Income"
+    OUTCOME = "Outcome"
+    INTERNAL = "Internal"

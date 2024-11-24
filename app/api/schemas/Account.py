@@ -13,16 +13,10 @@ class AccountCreate(AccountBase):
     pass
 
 
-class AccountNameUpdate(BaseModel):
-    name: str
-
-
-class AccountInitialBalanceUpdate(BaseModel):
-    initial_balance: float
-
-
-class AccountTypeUpdate(BaseModel):
-    type: AccountType
+class AccountUpdate(BaseModel):
+    name: Optional[str] = None
+    initial_balance: Optional[float] = None
+    type: Optional[AccountType] = None
 
 
 class Account(AccountBase):

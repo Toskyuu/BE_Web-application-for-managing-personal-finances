@@ -4,14 +4,16 @@ from app.database.postgres_utils import get_db
 from app.api.schemas.Category import CategoryUpdate, CategoryCreate, Category
 from app.database.repositories.category import CategoryRepository
 
-router = APIRouter()
+category_router = APIRouter(
+    prefix="/categories",
+    tags=["Categories"]
+)
 
-
-@router.get("/", response_model=list[Category])
+@category_router.get("/", response_model=list[Category])
 def list_categories(user_id: int, db: Session = Depends(get_db)):
     return CategoryRepository.get_categories_by_user(db, user_id=user_id)
 
-@router.get("/{category_id}", response_model=Category)
+@category_router.get("/{category_id}", response_model=Category)
 def get_category(category_id: int, db: Session = Depends(get_db)):
     category = CategoryRepository.get_category(db, category_id=category_id)
     if not category:
@@ -19,12 +21,12 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
     return category
 
 
-@router.post("/", response_model=Category)
+@category_router.post("/", response_model=Category)
 def create_category(category: CategoryCreate, user_id: int, db: Session = Depends(get_db)):
     return CategoryRepository.create_category(db, category=category, user_id=user_id)
 
 
-@router.post("/categories/{category_id}")
+@category_router.put("/categories/{category_id}")
 async def update_category(category_id: int, category_update: CategoryUpdate, db: Session = Depends(get_db)):
     updated_category = CategoryRepository.update_category(db, category_id, category_update)
     if not updated_category:
@@ -34,7 +36,7 @@ async def update_category(category_id: int, category_update: CategoryUpdate, db:
 
 
 
-@router.delete("/categories/{category_id}")
+@category_router.delete("/categories/{category_id}")
 async def delete_category(category_id: int, db: Session = Depends(get_db)):
     success = CategoryRepository.delete_category(db, category_id)
     if not success:
