@@ -26,7 +26,7 @@ def create_category(category: CategoryCreate, user_id: int, db: Session = Depend
     return CategoryRepository.create_category(db, category=category, user_id=user_id)
 
 
-@category_router.post("/categories/{category_id}")
+@category_router.put("/categories/{category_id}")
 async def update_category(category_id: int, category_update: CategoryUpdate, db: Session = Depends(get_db)):
     updated_category = CategoryRepository.update_category(db, category_id, category_update)
     if not updated_category:

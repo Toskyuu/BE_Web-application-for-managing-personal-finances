@@ -35,9 +35,8 @@ class AccountRepository:
         for key, value in updated_account.items():
             setattr(account, key, value)
 
-            db.add(account)
-            db.commit()
-            db.refresh(account)
+        db.commit()
+        db.refresh(account)
         return account
 
     @staticmethod

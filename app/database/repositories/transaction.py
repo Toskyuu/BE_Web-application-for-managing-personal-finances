@@ -45,7 +45,6 @@ class TransactionRepository:
         for key, value in updated_transaction.items():
             setattr(transaction, key, value)
 
-        db.add(transaction)
         db.commit()
         db.refresh(transaction)
 
