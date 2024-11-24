@@ -19,4 +19,7 @@ class Account(Base):
         self.balance = self.initial_balance
 
     user = relationship("User", back_populates="accounts")
-    transactions = relationship("Transaction", back_populates="account")
+    transactions_to = relationship("Transaction", foreign_keys="[Transaction.to_account_id]",
+                                   back_populates="to_account")
+    transactions_from = relationship("Transaction", foreign_keys="[Transaction.from_account_id]",
+                                     back_populates="from_account")
