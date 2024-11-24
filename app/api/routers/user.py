@@ -7,10 +7,13 @@ from app.services.auth import verify_password, create_access_token
 from app.database.repositories.user import UserRepository
 from fastapi.security import OAuth2PasswordRequestForm
 
-router = APIRouter()
+user_router = APIRouter(
+    prefix="/users",
+    tags=["Users"]
+)
 
 
-@router.post("/register", response_model=UserSchema)
+@user_router.post("/register", response_model=UserSchema)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(UserModel).filter(UserModel.email == user.email).first()
     if existing_user:
@@ -20,7 +23,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.post("/login")
+@user_router.post("/login")
 def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     db_user = UserRepository.get_user_by_email(db, user.username)  # 'username' w formularzu OAuth2 to email
     if db_user is None:
