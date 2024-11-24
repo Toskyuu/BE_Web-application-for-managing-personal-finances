@@ -15,6 +15,8 @@ class Transaction(Base):
     date = Column(Date, default=datetime.date.today)
     account_id = Column(Integer, ForeignKey("accounts.account_id"), nullable=False)
     category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
 
     account = relationship("Account", back_populates="transactions")
     category = relationship("Category", back_populates="transactions")
+    user = relationship("User", back_populates="transactions")
