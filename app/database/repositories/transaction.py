@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database.models.account import Account
@@ -21,40 +23,72 @@ class TransactionRepository:
 
     @staticmethod
     def create_transaction(db: Session, transaction: TransactionCreate):
-        account = db.query(Account).filter(Account.account_id == transaction.account_id).first()
+        try:
+            with db.begin():
+                account = db.query(Account).filter(Account.account_id == transaction.account_id).first()
+                if not account:
+                    raise ValueError("Account not found")
 
-        if not account:
-            raise ValueError("Account not found")
+                db_transaction = Transaction(**transaction.model_dump(), user_id=account.user_id)
+                db.add(db_transaction)
 
-        category = db.query(Category).filter(Category.category_id == transaction.category_id).first()
-        if not category:
-            raise ValueError("Category not found")
-        print(f"Transaction data: {transaction.model_dump()}")
-        print(f"Account: {account}")
-        print(f"Category: {category}")
-        db_transaction = Transaction(**transaction.model_dump(), user_id=account.user_id)
-        db.add(db_transaction)
-        db.commit()
-        db.refresh(db_transaction)
-        return db_transaction
+                account.balance += transaction.amount
+                db.commit()
+
+                return db_transaction
+        except SQLAlchemyError as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
 
     @staticmethod
     def update_transaction(db: Session, transaction_id: int, transaction_update: TransactionUpdate) -> Transaction:
-        transaction = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
-        updated_transaction = transaction_update.model_dump(exclude_unset=True)
-        for key, value in updated_transaction.items():
-            setattr(transaction, key, value)
+        try:
+            transaction = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
+            if not transaction:
+                raise ValueError("Transaction not found")
 
-        db.commit()
-        db.refresh(transaction)
+            previous_amount = transaction.amount
+            updated_transaction = transaction_update.model_dump(exclude_unset=True)
 
-        return transaction
+            for key, value in updated_transaction.items():
+                setattr(transaction, key, value)
+
+            if 'amount' in updated_transaction:
+                amount_difference = updated_transaction['amount'] - previous_amount
+                account = db.query(Account).filter(Account.account_id == transaction.account_id).first()
+                if account:
+                    account.balance += amount_difference
+                else:
+                    raise ValueError("Account not found for transaction")
+
+            db.commit()
+            db.refresh(transaction)
+            return transaction
+
+        except SQLAlchemyError as e:
+            db.rollback()  # W przypadku błędu wycofanie transakcji
+            raise HTTPException(status_code=400, detail=str(e))
 
     @staticmethod
     def delete_transaction(db: Session, transaction_id: int) -> bool:
-        transaction = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
-        if transaction:
-            db.delete(transaction)
-            db.commit()
-            return True
-        return False
+        try:
+            with db.begin():
+                transaction = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
+
+                if not transaction:
+                    return False
+
+                account = db.query(Account).filter(Account.account_id == transaction.account_id).first()
+                if not account:
+                    raise ValueError("Account not found")
+                else:
+                    account.balance -= transaction.amount
+
+                db.delete(transaction)
+                db.commit()
+
+                return True
+
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))

@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from app.database.models.account import Account
 from app.api.schemas.Account import AccountCreate, AccountUpdate
@@ -24,20 +26,30 @@ class AccountRepository:
     @staticmethod
     def update_account(
             db: Session, account_id: int, account_update: AccountUpdate) -> Account:
-        account = db.query(Account).filter(Account.account_id == account_id).first()
-        updated_account = account_update.model_dump(exclude_unset=True)
+        try:
+            with db.begin():
+                account = db.query(Account).filter(Account.account_id == account_id).first()
+                if not account:
+                    raise ValueError("Account not found")
 
-        if account_update.initial_balance:
-            balance_difference = account.initial_balance - account_update.initial_balance
-            account.initial_balance = account_update.initial_balance
-            account.balance -= balance_difference
+                updated_account = account_update.model_dump(exclude_unset=True)
 
-        for key, value in updated_account.items():
-            setattr(account, key, value)
+                if account_update.initial_balance is not None:
+                    balance_difference = account.initial_balance - account_update.initial_balance
+                    account.initial_balance = account_update.initial_balance
+                    account.balance -= balance_difference
 
-        db.commit()
-        db.refresh(account)
-        return account
+                for key, value in updated_account.items():
+                    setattr(account, key, value)
+
+                db.commit()
+
+                db.refresh(account)
+                return account
+
+        except SQLAlchemyError as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
 
     @staticmethod
     def delete_account(db: Session, account_id: int) -> bool:
