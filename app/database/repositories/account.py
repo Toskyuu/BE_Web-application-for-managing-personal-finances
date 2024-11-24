@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.database.models.account import Account
-from app.api.schemas.Account import AccountCreate, AccountTypeUpdate, AccountNameUpdate, AccountInitialBalanceUpdate
+from app.api.schemas.Account import AccountCreate, AccountUpdate
 
 
 class AccountRepository:
@@ -22,32 +22,20 @@ class AccountRepository:
         return db_account
 
     @staticmethod
-    def update_account_name(db: Session, account_id: int, account_name_update: AccountNameUpdate) -> Account:
+    def update_account(
+            db: Session, account_id: int, account_update: AccountUpdate) -> Account:
         account = db.query(Account).filter(Account.account_id == account_id).first()
-        if account:
-            account.name = account_name_update.name
-            db.commit()
-            db.refresh(account)
-        return account
+        updated_account = account_update.model_dump(exclude_unset=True)
 
-    @staticmethod
-    def update_account_initial_balance(
-            db: Session, account_id: int, account_initial_balance_update: AccountInitialBalanceUpdate
-    ) -> Account:
-        account = db.query(Account).filter(Account.account_id == account_id).first()
-        if account:
-            balance_difference = account.initial_balance - account_initial_balance_update.initial_balance
-            account.initial_balance = account_initial_balance_update.initial_balance
+        if account_update.initial_balance:
+            balance_difference = account.initial_balance - account_update.initial_balance
+            account.initial_balance = account_update.initial_balance
             account.balance -= balance_difference
-            db.commit()
-            db.refresh(account)
-        return account
 
-    @staticmethod
-    def update_account_type(db: Session, account_id: int, account_type_update: AccountTypeUpdate) -> Account:
-        account = db.query(Account).filter(Account.account_id == account_id).first()
-        if account:
-            account.type = account_type_update.type
+        for key, value in updated_account.items():
+            setattr(account, key, value)
+
+            db.add(account)
             db.commit()
             db.refresh(account)
         return account
