@@ -1,9 +1,9 @@
-from app.api.schemas.User import UserCreate, User as UserSchema
+from app.api.schemas.User import UserCreate, User as UserSchema, UserUpdatePassword, User
 from app.database.models.user import User as UserModel
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database.postgres_utils import get_db
-from app.services.auth import verify_password, create_access_token
+from app.services.auth import verify_password, create_access_token, get_password_hash
 from app.database.repositories.user import UserRepository
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -34,3 +34,38 @@ def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
     access_token = create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@user_router.delete("/")
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    if not UserRepository.delete_user(db, user_id):
+        raise HTTPException(status_code=500, detail="Failed to delete user")
+    return {"message": "User deleted successfully"}
+
+
+@user_router.put("/change-password")
+def change_password(user_id: int, password_data: UserUpdatePassword, db: Session = Depends(get_db)):
+    user = UserRepository.get_user_by_id(db, user_id)
+    if not user or not verify_password(password_data.old_password, user.password):
+        raise HTTPException(status_code=400, detail="Invalid old password")
+
+    hashed_new_password = get_password_hash(password_data.new_password)
+    UserRepository.update_password(db, user_id, hashed_new_password)
+
+    return {"message": "Password updated successfully"}
+
+@user_router.get("/", response_model=list[User])
+def list_users(db: Session = Depends(get_db)):
+    return UserRepository.get_users(db)
+
+@user_router.get("/by-id", response_model=User)
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+    return UserRepository.get_user_by_id(db, user_id,)
+
+
+@user_router.get("/by-email", response_model=User)
+def get_user_by_email(email: str, db: Session = Depends(get_db)):
+    return UserRepository.get_user_by_email(db, email)
+
+
+
+

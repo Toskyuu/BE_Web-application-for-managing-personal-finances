@@ -14,7 +14,7 @@ class User(Base):
     password = Column(String, nullable=False)
     is_mail_verified = Column(Boolean, default=False, nullable=False)
 
-    accounts = relationship("Account", back_populates="user")
-    budgets = relationship("Budget", back_populates="user")
-    categories = relationship("Category", back_populates="user")
-    transactions = relationship("Transaction", back_populates="user")
+    accounts = relationship("Account", back_populates="user", cascade="all, delete-orphan")
+    budgets = relationship("Budget", back_populates="user", cascade="all, delete-orphan")
+    categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
