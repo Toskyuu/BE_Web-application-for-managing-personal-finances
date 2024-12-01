@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database.postgres_utils import get_db
-from app.api.schemas.Transaction import TransactionUpdate, TransactionCreateIncome, TransactionCreateInternal, TransactionCreateOutcome, Transaction
+from app.api.schemas.Transaction import TransactionUpdate, TransactionCreateIncome, TransactionCreateInternal, \
+    TransactionCreateOutcome, Transaction
 from app.database.repositories.transaction import TransactionRepository
 
 transaction_router = APIRouter(
@@ -15,7 +16,7 @@ def list_transactions_by_user(user_id: int, db: Session = Depends(get_db)):
     return TransactionRepository.get_transactions_by_user(db, user_id=user_id)
 
 
-@transaction_router.get("/{account_id}", response_model=list[Transaction])
+@transaction_router.get("/{account_id}/transactions", response_model=list[Transaction])
 def list_transactions_by_account(account_id: int, db: Session = Depends(get_db)):
     return TransactionRepository.get_transactions_by_account(db, account_id=account_id)
 
@@ -32,9 +33,11 @@ def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
 def create_transaction_income(transaction: TransactionCreateIncome, db: Session = Depends(get_db)):
     return TransactionRepository.create_transaction_income(db, transaction)
 
+
 @transaction_router.post("/outcome", response_model=Transaction)
 def create_transaction_outcome(transaction: TransactionCreateOutcome, db: Session = Depends(get_db)):
     return TransactionRepository.create_transaction_outcome(db, transaction)
+
 
 @transaction_router.post("/internal", response_model=Transaction)
 def create_transaction_internal(transaction: TransactionCreateInternal, db: Session = Depends(get_db)):

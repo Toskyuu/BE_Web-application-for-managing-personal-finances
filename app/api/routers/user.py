@@ -13,7 +13,7 @@ user_router = APIRouter(
 )
 
 
-@user_router.post("/register", response_model=UserSchema)
+@user_router.post("/auth/register", response_model=UserSchema)
 def register_user(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(UserModel).filter(UserModel.email == user.email).first()
     if existing_user:
@@ -23,7 +23,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@user_router.post("/login")
+@user_router.post("/auth/login")
 def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     db_user = UserRepository.get_user_by_email(db, user.username)  # 'username' w formularzu OAuth2 to email
     if db_user is None:
@@ -35,14 +35,15 @@ def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     access_token = create_access_token(data={"sub": db_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@user_router.delete("/")
+
+@user_router.delete("/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     if not UserRepository.delete_user(db, user_id):
         raise HTTPException(status_code=500, detail="Failed to delete user")
     return {"message": "User deleted successfully"}
 
 
-@user_router.put("/change-password")
+@user_router.put("/auth/change-password")
 def change_password(user_id: int, password_data: UserUpdatePassword, db: Session = Depends(get_db)):
     user = UserRepository.get_user_by_id(db, user_id)
     if not user or not verify_password(password_data.old_password, user.password):
@@ -53,19 +54,12 @@ def change_password(user_id: int, password_data: UserUpdatePassword, db: Session
 
     return {"message": "Password updated successfully"}
 
+
 @user_router.get("/", response_model=list[User])
 def list_users(db: Session = Depends(get_db)):
     return UserRepository.get_users(db)
 
-@user_router.get("/by-id", response_model=User)
-def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
-    return UserRepository.get_user_by_id(db, user_id,)
 
-
-@user_router.get("/by-email", response_model=User)
-def get_user_by_email(email: str, db: Session = Depends(get_db)):
-    return UserRepository.get_user_by_email(db, email)
-
-
-
-
+@user_router.get("/{user_id}", response_model=User)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    return UserRepository.get_user_by_id(db, user_id, )

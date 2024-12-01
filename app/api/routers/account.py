@@ -28,7 +28,7 @@ def create_account(account: AccountCreate, user_id: int, db: Session = Depends(g
     return AccountRepository.create_account(db, account=account, user_id=user_id)
 
 
-@account_router.put("/accounts/{account_id}")
+@account_router.put("/{account_id}")
 async def update_account_initial_balance(account_id: int, account_update: AccountUpdate,
                                          db: Session = Depends(get_db)):
     updated_account = AccountRepository.update_account(db, account_id, account_update)
@@ -37,7 +37,7 @@ async def update_account_initial_balance(account_id: int, account_update: Accoun
     return updated_account
 
 
-@account_router.delete("/accounts/{account_id}")
+@account_router.delete("/{account_id}")
 async def delete_account(account_id: int, db: Session = Depends(get_db)):
     success = AccountRepository.delete_account(db, account_id)
     if not success:
