@@ -13,17 +13,17 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     description = Column(String)
     date = Column(Date, default=datetime.date.today)
-    to_account_id = Column(Integer, ForeignKey("accounts.account_id"))
-    from_account_id = Column(Integer, ForeignKey("accounts.account_id"))
+    account_id = Column(Integer, ForeignKey("accounts.account_id"))
+    account_id_2 = Column(Integer, ForeignKey("accounts.account_id"))
     category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     type = Column(Enum(TransactionType), nullable=False)
 
     to_account = relationship(
-        "Account", foreign_keys=[to_account_id], back_populates="transactions_to"
+        "Account", foreign_keys=[account_id], back_populates="transactions_to"
     )
     from_account = relationship(
-        "Account", foreign_keys=[from_account_id], back_populates="transactions_from"
+        "Account", foreign_keys=[account_id_2], back_populates="transactions_from"
     )
     category = relationship("Category", back_populates="transactions")
     user = relationship("User", back_populates="transactions")

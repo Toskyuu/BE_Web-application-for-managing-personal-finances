@@ -13,35 +13,28 @@ class TransactionBase(BaseModel):
     date: Optional[date] = None
 
 
-class TransactionCreateBase(TransactionBase):
+class TransactionCreate(TransactionBase):
     category_id: int
+    account_id: int
+    account_id_2: Optional[int] = None
+    type: TransactionType
 
-
-class TransactionCreateOutcome(TransactionCreateBase):
-    from_account_id: int
-
-class TransactionCreateIncome(TransactionCreateBase):
-    to_account_id: int
-
-
-class TransactionCreateInternal(TransactionCreateBase):
-    from_account_id: int
-    to_account_id: int
 
 class TransactionUpdate(BaseModel):
     description: Optional[str] = None
     amount: Optional[float] = None
     date: Optional[date] = None
     category_id: Optional[int] = None
-    from_account_id: Optional[int] = None
-    to_account_id: Optional[int] = None
+    account_id: Optional[int] = None
+    account_id_2: Optional[int] = None
+    type: Optional[TransactionType] = None
 
 
 class Transaction(TransactionBase):
     transaction_id: int
     category_id: int
-    from_account_id: Optional[int] = None
-    to_account_id: Optional[int] = None
+    account_id: int
+    account_id_2: Optional[int] = None
     user_id: int
     date: Optional[datetime.date] = None
     type: TransactionType
