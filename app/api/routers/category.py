@@ -9,9 +9,11 @@ category_router = APIRouter(
     tags=["Categories"]
 )
 
+
 @category_router.get("/", response_model=list[Category])
 def list_categories(user_id: int, db: Session = Depends(get_db)):
     return CategoryRepository.get_categories_by_user(db, user_id=user_id)
+
 
 @category_router.get("/{category_id}", response_model=Category)
 def get_category(category_id: int, db: Session = Depends(get_db)):
@@ -26,7 +28,7 @@ def create_category(category: CategoryCreate, user_id: int, db: Session = Depend
     return CategoryRepository.create_category(db, category=category, user_id=user_id)
 
 
-@category_router.put("/categories/{category_id}")
+@category_router.put("/{category_id}")
 async def update_category(category_id: int, category_update: CategoryUpdate, db: Session = Depends(get_db)):
     updated_category = CategoryRepository.update_category(db, category_id, category_update)
     if not updated_category:
@@ -34,9 +36,7 @@ async def update_category(category_id: int, category_update: CategoryUpdate, db:
     return updated_category
 
 
-
-
-@category_router.delete("/categories/{category_id}")
+@category_router.delete("/{category_id}")
 async def delete_category(category_id: int, db: Session = Depends(get_db)):
     success = CategoryRepository.delete_category(db, category_id)
     if not success:
