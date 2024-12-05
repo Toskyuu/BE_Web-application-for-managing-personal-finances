@@ -23,7 +23,6 @@ class AccountRepository:
 
     @staticmethod
     def create_account(db: Session, account: AccountCreate, user_id: int):
-
         db_account = Account(**account.model_dump(), user_id=user_id)
         db.add(db_account)
         db.commit()
@@ -48,8 +47,6 @@ class AccountRepository:
 
                 for key, value in updated_account.items():
                     setattr(account, key, value)
-
-                db.commit()
 
                 db.refresh(account)
                 return account

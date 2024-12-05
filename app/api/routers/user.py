@@ -25,7 +25,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @user_router.post("/auth/login")
 def login(user: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    db_user = UserRepository.get_user_by_email(db, user.username)  # 'username' w formularzu OAuth2 to email
+    db_user = UserRepository.get_user_by_email(db, user.username)
     if db_user is None:
         raise HTTPException(status_code=404, detail="Użytkownik nie istnieje")
 
@@ -49,7 +49,7 @@ def change_password(user_id: int, password_data: UserUpdatePassword, db: Session
     if not user or not verify_password(password_data.old_password, user.password):
         raise HTTPException(status_code=400, detail="Invalid old password")
 
-    hashed_new_password = get_password_hash(password_data.new_password)
+    hashed_new_password = get_password_hash(password_data.password)
     UserRepository.update_password(db, user_id, hashed_new_password)
 
     return {"message": "Password updated successfully"}
