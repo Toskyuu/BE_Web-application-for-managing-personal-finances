@@ -19,7 +19,7 @@ class AccountUpdate(BaseModel):
     type: Optional[AccountType] = None
 
 
-class Account(AccountBase):
+class Account(BaseModel):
     account_id: int
     user_id: int
     balance: Optional[float] = None
