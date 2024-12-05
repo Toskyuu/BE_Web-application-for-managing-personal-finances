@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database.postgres_utils import Base
 
-from app.database.models.budget import Budget
 
 
 class Category(Base):
@@ -12,6 +11,7 @@ class Category(Base):
     name = Column(String, nullable=False)
     description = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    deleted = Column(Boolean, default=False)
 
     transactions = relationship("Transaction", back_populates="category")
     budgets = relationship("Budget", back_populates="category")

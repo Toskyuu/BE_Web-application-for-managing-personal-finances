@@ -21,6 +21,8 @@ class Category(CategoryBase):
     name: str
     description: str
     user_id: int
+    deleted: Optional[bool] = False
+
 
     class Config:
         from_attributes = True
