@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum, Boolean
 from sqlalchemy.orm import relationship, validates
 from app.database.postgres_utils import Base
 from app.database.models.enums import AccountType
-
 
 class Account(Base):
     __tablename__ = "accounts"
@@ -13,6 +12,7 @@ class Account(Base):
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     initial_balance = Column(Float, nullable=False, default=0.0)
     balance = Column(Float, nullable=False)
+    deleted = Column(Boolean, default=False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -7,12 +7,19 @@ from app.api.schemas.Account import AccountCreate, AccountUpdate
 
 class AccountRepository:
     @staticmethod
+    @staticmethod
     def get_account(db: Session, account_id: int):
-        return db.query(Account).filter(Account.account_id == account_id).first()
+        return db.query(Account).filter(
+            Account.account_id == account_id,
+            Account.deleted == False
+        ).first()
 
     @staticmethod
     def get_accounts_by_user(db: Session, user_id: int):
-        return db.query(Account).filter(Account.user_id == user_id).all()
+        return db.query(Account).filter(
+            Account.user_id == user_id,
+            Account.deleted == False
+        ).all()
 
     @staticmethod
     def create_account(db: Session, account: AccountCreate, user_id: int):
@@ -55,7 +62,7 @@ class AccountRepository:
     def delete_account(db: Session, account_id: int) -> bool:
         account = db.query(Account).filter(Account.account_id == account_id).first()
         if account:
-            db.delete(account)
+            account.deleted = True
             db.commit()
             return True
         return False

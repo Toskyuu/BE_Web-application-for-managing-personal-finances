@@ -25,6 +25,7 @@ class Account(AccountBase):
     balance: Optional[float] = None
     type: AccountType
     initial_balance: Optional[float] = None
+    deleted: Optional[bool] = False
 
     class Config:
         from_attributes = True

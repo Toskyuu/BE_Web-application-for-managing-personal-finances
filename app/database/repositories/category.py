@@ -2,14 +2,21 @@ from sqlalchemy.orm import Session
 from app.database.models.category import Category
 from app.api.schemas.Category import CategoryUpdate, CategoryCreate
 
+
 class CategoryRepository:
     @staticmethod
     def get_category(db: Session, category_id: int):
-        return db.query(Category).filter(Category.category_id == category_id).first()
+        return db.query(Category).filter(
+            Category.category_id == category_id,
+            Category.deleted == False
+        ).first()
 
     @staticmethod
     def get_categories_by_user(db: Session, user_id: int):
-        return db.query(Category).filter(Category.user_id == user_id).all()
+        return db.query(Category).filter(
+            Category.user_id == user_id,
+            Category.deleted == False
+        ).all()
 
     @staticmethod
     def create_category(db: Session, category: CategoryCreate, user_id: int):
@@ -35,7 +42,7 @@ class CategoryRepository:
     def delete_category(db: Session, category_id: int) -> bool:
         category = db.query(Category).filter(Category.category_id == category_id).first()
         if category:
-            db.delete(category)
+            category.deleted = True
             db.commit()
             return True
         return False
