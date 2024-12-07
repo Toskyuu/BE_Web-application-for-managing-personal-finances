@@ -2,9 +2,9 @@ class CategoryError(Exception):
     pass
 
 class CategoryNotFoundError(CategoryError):
-    def __init__(self, budget_id: int):
-        self.budget_id = budget_id
-        super().__init__(f"Category with ID {budget_id} not found.")
+    def __init__(self, category_id: int):
+        self.category_id = category_id
+        super().__init__(f"Category with ID {category_id} not found.")
 
 class CategoryUserNotFoundError(CategoryError):
     def __init__(self, user_id: int):
