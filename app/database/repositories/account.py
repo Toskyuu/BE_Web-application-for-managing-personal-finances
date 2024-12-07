@@ -1,21 +1,30 @@
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
+from app.database.models.user import User
 from app.database.models.account import Account
 from app.api.schemas.Account import AccountCreate, AccountUpdate
+from app.exceptions.account_exceptions import AccountCreationError, AccountNotFoundError, AccountUpdateError, \
+    AccountUserNotFoundError, AccountDeleteError
 
 
 class AccountRepository:
     @staticmethod
-    @staticmethod
     def get_account(db: Session, account_id: int):
-        return db.query(Account).filter(
+        account = db.query(Account).filter(
             Account.account_id == account_id,
             Account.deleted == False
         ).first()
+        if not account:
+            raise AccountNotFoundError(account_id)
+        return account
 
     @staticmethod
     def get_accounts_by_user(db: Session, user_id: int):
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise AccountUserNotFoundError(user_id)
         return db.query(Account).filter(
             Account.user_id == user_id,
             Account.deleted == False
@@ -23,11 +32,18 @@ class AccountRepository:
 
     @staticmethod
     def create_account(db: Session, account: AccountCreate, user_id: int):
-        db_account = Account(**account.model_dump(), user_id=user_id)
-        db.add(db_account)
-        db.commit()
-        db.refresh(db_account)
-        return db_account
+        try:
+            user = db.query(User).filter(User.user_id == user_id).first()
+            if not user:
+                raise AccountUserNotFoundError(user_id)
+
+            db_account = Account(**account.model_dump(), user_id=user_id)
+            db.add(db_account)
+            db.commit()
+            db.refresh(db_account)
+            return db_account
+        except SQLAlchemyError as e:
+            raise AccountCreationError(str(e))
 
     @staticmethod
     def update_account(
@@ -36,7 +52,7 @@ class AccountRepository:
             with db.begin():
                 account = db.query(Account).filter(Account.account_id == account_id).first()
                 if not account:
-                    raise ValueError("Account not found")
+                    raise AccountNotFoundError(account_id)
 
                 updated_account = account_update.model_dump(exclude_unset=True)
 
@@ -51,15 +67,20 @@ class AccountRepository:
                 db.refresh(account)
                 return account
 
+
         except SQLAlchemyError as e:
-            db.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
+            raise AccountUpdateError(str(e))
 
     @staticmethod
     def delete_account(db: Session, account_id: int) -> bool:
-        account = db.query(Account).filter(Account.account_id == account_id).first()
-        if account:
-            account.deleted = True
-            db.commit()
-            return True
-        return False
+        try:
+            with db.begin():
+                account = db.query(Account).filter(Account.account_id == account_id).first()
+                if not account:
+                    raise AccountNotFoundError(account_id=account_id)
+
+                account.deleted = True
+                db.refresh(account)
+                return True
+        except SQLAlchemyError as e:
+            raise AccountDeleteError(str(e))
