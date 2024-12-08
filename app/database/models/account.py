@@ -23,3 +23,8 @@ class Account(Base):
                                    back_populates="to_account")
     transactions_from = relationship("Transaction", foreign_keys="[Transaction.account_id_2]",
                                      back_populates="from_account")
+    reccuring_transactions_to = relationship("Reccuring_Transaction", foreign_keys="[Reccuring_Transaction.account_id]",
+                                   back_populates="to_account")
+    reccuring_transactions_from = relationship("Reccuring_Transaction", foreign_keys="[Reccuring_Transaction.account_id_2]",
+                                     back_populates="from_account")
+

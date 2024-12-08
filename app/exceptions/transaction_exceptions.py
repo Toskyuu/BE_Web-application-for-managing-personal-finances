@@ -24,7 +24,9 @@ class TransactionCategoryNotFoundError(TransactionError):
                 self.category_id = category_id
                 super().__init__(f"Category with ID {category_id} not found.")
 
-
+class TransactionFrequencyNotFound(TransactionError):
+    def __init__(self, frequency: str):
+        super().__init__(f"Frequency: {frequency} not found")
 
 class TransactionCreationError(TransactionError):
     def __init__(self, message: str):

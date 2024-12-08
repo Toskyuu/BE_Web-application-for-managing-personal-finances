@@ -4,32 +4,14 @@ from sqlalchemy.orm import Session
 
 from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage
 from app.database.models.budget import Budget as BudgetModel
-from app.database.models.enums import TransactionType
-from app.database.models.transaction import Transaction
+from app.database.utils import get_spent
 from app.database.models.user import User
 from app.exceptions.budget_exceptions import BudgetNotFoundError, BudgetUserNotFoundError, BudgetCreationError, \
     BudgetUpdateError, BudgetDeleteError
 
 
 class BudgetRepository:
-    @staticmethod
-    def get_spent(db: Session, budget_id: int) -> float:
-        budget = db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
-        if not budget:
-            raise BudgetNotFoundError(budget_id)
 
-        spent_amount = (
-                db.query(func.sum(Transaction.amount))
-                .filter(
-                    Transaction.category_id == budget.category_id,
-                    Transaction.user_id == budget.user_id,
-                    Transaction.type == TransactionType.OUTCOME,
-                    func.extract("month", Transaction.date) == func.extract("month", budget.month_year),
-                    func.extract("year", Transaction.date) == func.extract("year", budget.month_year),
-                )
-                .scalar() or 0.0
-        )
-        return spent_amount
 
     @staticmethod
     def get_budget(db: Session, budget_id: int) -> BudgetUsage:
@@ -43,7 +25,7 @@ class BudgetRepository:
             limit=budget.limit,
             month_year=budget.month_year,
             user_id=budget.user_id,
-            spent_in_budget=BudgetRepository.get_spent(db, budget.budget_id)
+            spent_in_budget=get_spent(db, budget.budget_id)
         )
 
     @staticmethod
@@ -66,7 +48,7 @@ class BudgetRepository:
                 limit=budget.limit,
                 month_year=budget.month_year,
                 user_id=budget.user_id,
-                spent_in_budget=BudgetRepository.get_spent(db, budget.budget_id),
+                spent_in_budget=get_spent(db, budget.budget_id),
             )
             for budget in budgets
         ]

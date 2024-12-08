@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
-from app.database.models.enums import TransactionType
+from app.database.models.enums import TransactionType, RecurringFrequency
 
 
 class TransactionBase(BaseModel):
@@ -29,6 +29,9 @@ class TransactionCreate(TransactionBase):
     account_id: int
     account_id_2: Optional[int] = None
     type: TransactionType
+    is_recurring: Optional[bool] = False
+    recurring_frequency: Optional[RecurringFrequency] = None
+    next_occurrence: Optional[dtdate] = None
 
 
 
@@ -40,6 +43,9 @@ class TransactionUpdate(TransactionBase):
     account_id: Optional[int] = None
     account_id_2: Optional[int] = None
     type: Optional[TransactionType] = None
+    is_recurring: Optional[bool] = None
+    recurring_frequency: Optional[RecurringFrequency] = None
+    next_occurrence: Optional[dtdate] = None
 
 
 class Transaction(BaseModel):
@@ -50,6 +56,9 @@ class Transaction(BaseModel):
     user_id: int
     date: dtdate
     type: TransactionType
+    is_recurring: Optional[bool] = False
+    recurring_frequency: Optional[RecurringFrequency] = None
+    next_occurrence: Optional[dtdate] = None
 
     class Config:
         from_attributes = True

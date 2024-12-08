@@ -5,7 +5,7 @@ from app.api.schemas.Transaction import TransactionUpdate, Transaction, Transact
 from app.database.repositories.transaction import TransactionRepository
 from app.exceptions.transaction_exceptions import TransactionUserNotFoundError, TransactionAccountNotFoundError, \
     TransactionNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
-    TransactionCategoryNotFoundError
+    TransactionCategoryNotFoundError, TransactionFrequencyNotFound
 
 transaction_router = APIRouter(
     prefix="/transactions",
@@ -38,9 +38,9 @@ def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
 
 
 @transaction_router.post("/", response_model=Transaction)
-def create_transaction(transaction: TransactionCreate, db: Session = Depends(get_db)):
+def create_transaction(transaction: TransactionCreate, user_id: int, db: Session = Depends(get_db)):
     try:
-        return TransactionRepository.create_transaction(db, transaction)
+        return TransactionRepository.create_transaction(db, transaction, user_id)
     except TransactionCreationError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except TransactionUserNotFoundError as e:
@@ -48,6 +48,8 @@ def create_transaction(transaction: TransactionCreate, db: Session = Depends(get
     except TransactionAccountNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except TransactionCategoryNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except TransactionFrequencyNotFound as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 

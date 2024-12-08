@@ -14,5 +14,6 @@ class Category(Base):
     deleted = Column(Boolean, default=False)
 
     transactions = relationship("Transaction", back_populates="category")
+    reccuring_transactions = relationship("Reccuring_Transaction", back_populates="category")
     budgets = relationship("Budget", back_populates="category")
     user = relationship("User", back_populates="categories")
