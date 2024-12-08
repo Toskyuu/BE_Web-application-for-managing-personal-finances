@@ -1,9 +1,9 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.database.models.user import User
-from app.database.models.account import Account
 from app.api.schemas.Account import AccountCreate, AccountUpdate
+from app.database.models.account import Account
+from app.database.models.user import User
 from app.exceptions.account_exceptions import AccountCreationError, AccountNotFoundError, AccountUpdateError, \
     AccountUserNotFoundError, AccountDeleteError
 
@@ -62,10 +62,7 @@ class AccountRepository:
 
                 for key, value in updated_account.items():
                     setattr(account, key, value)
-
-                db.refresh(account)
-                return account
-
+            return db.query(Account).filter(Account.account_id == account_id).first()
 
         except SQLAlchemyError as e:
             raise AccountUpdateError(str(e))
@@ -79,7 +76,6 @@ class AccountRepository:
                     raise AccountNotFoundError(account_id=account_id)
 
                 account.deleted = True
-                db.refresh(account)
                 return True
         except SQLAlchemyError as e:
             raise AccountDeleteError(str(e))

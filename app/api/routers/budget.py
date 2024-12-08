@@ -31,9 +31,9 @@ def get_budget(budget_id: int, db: Session = Depends(get_db)):
 
 
 @budget_router.get("/", response_model=list[BudgetUsage])
-def list_budgets_by_user(user_id: int, month: int, year: int, db: Session = Depends(get_db)):
+def list_budgets_by_user(user_id: int, db: Session = Depends(get_db)):
     try:
-        return BudgetRepository.get_budgets_by_user(db, user_id, month, year)
+        return BudgetRepository.get_budgets_by_user(db, user_id)
     except BudgetUserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

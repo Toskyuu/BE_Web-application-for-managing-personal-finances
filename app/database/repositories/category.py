@@ -1,7 +1,8 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from app.database.models.category import Category
+
 from app.api.schemas.Category import CategoryUpdate, CategoryCreate
+from app.database.models.category import Category
 from app.database.models.user import User
 from app.exceptions.category_exceptions import CategoryNotFoundError, CategoryUserNotFoundError, CategoryCreationError, \
     CategoryUpdateError, CategoryDeleteError
@@ -15,7 +16,7 @@ class CategoryRepository:
             Category.deleted == False
         ).first()
         if not category:
-            raise CategoryNotFoundError
+            raise CategoryNotFoundError(category_id)
         return category
 
     @staticmethod
@@ -48,13 +49,12 @@ class CategoryRepository:
             with db.begin():
                 category = db.query(Category).filter(Category.category_id == category_id).first()
                 if not category:
-                    raise CategoryNotFoundError
+                    raise CategoryNotFoundError(category_id)
                 updated_category = category_update.model_dump(exclude_unset=True)
                 for key, value in updated_category.items():
                     setattr(category, key, value)
 
-                db.refresh(category)
-                return category
+            return db.query(Category).filter(Category.category_id == category_id).first()
         except SQLAlchemyError as e:
             raise CategoryUpdateError(str(e))
 
@@ -64,10 +64,9 @@ class CategoryRepository:
             with db.begin():
                 category = db.query(Category).filter(Category.category_id == category_id).first()
                 if not category:
-                    raise CategoryNotFoundError
+                    raise CategoryNotFoundError(category_id)
 
                 category.deleted = True
-                db.refresh(category)
                 return True
         except SQLAlchemyError as e:
             raise CategoryDeleteError(str(e))

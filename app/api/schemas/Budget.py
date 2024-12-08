@@ -45,7 +45,7 @@ class Budget(BaseModel):
     category_id: int
     budget_id: int
     user_id: int
-    spent_in_budget: float
+    spent_in_budget: Optional[float] = None
 
     class Config:
         from_attributes = True

@@ -19,6 +19,12 @@ class TransactionAccountNotFoundError(TransactionError):
         self.account_id = account_id
         super().__init__(f"Account with ID {account_id} not found.")
 
+class TransactionCategoryNotFoundError(TransactionError):
+            def __init__(self, category_id: int):
+                self.category_id = category_id
+                super().__init__(f"Category with ID {category_id} not found.")
+
+
 
 class TransactionCreationError(TransactionError):
     def __init__(self, message: str):
@@ -33,3 +39,4 @@ class TransactionUpdateError(TransactionError):
 class TransactionDeleteError(TransactionError):
     def __init__(self, message: str):
         super().__init__(f"Failed to delete transaction: {message}")
+

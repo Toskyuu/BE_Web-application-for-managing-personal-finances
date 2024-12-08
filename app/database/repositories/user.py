@@ -1,10 +1,11 @@
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
+
 from app.database.models.user import User
 from app.exceptions.user_exceptions import UserDeleteError, UserNotFoundError, UserCreationError, \
     UserUpdatePasswordError, UserEmailExistError, UserInvalidPassword, UserEmailNotFoundError, UserLoginError, \
     UserLoginDataError
 from app.services.auth import get_password_hash, verify_password, create_access_token
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 
 class UserRepository:
@@ -13,7 +14,7 @@ class UserRepository:
     def login(db: Session, email: str, password: str):
         try:
             user = db.query(User).filter(User.email == email).first()
-            if not user or verify_password(password, user.password):
+            if not user or not verify_password(password, user.password):
                 raise UserLoginDataError()
             access_token = create_access_token(data={"sub": user.email})
             return {"access_token": access_token, "token_type": "bearer"}
@@ -47,14 +48,11 @@ class UserRepository:
 
                 db.add(db_user)
 
-                db.refresh(db_user)
                 return db_user
 
         except IntegrityError as e:
-            db.rollback()
             raise UserCreationError(str(e))
         except SQLAlchemyError as e:
-            db.rollback()
             raise UserCreationError(str(e))
 
     @staticmethod
@@ -76,16 +74,15 @@ class UserRepository:
         return db.query(User).all()
 
     @staticmethod
-    def update_password(db: Session, user_id: int, new_password: str):
+    def update_password(db: Session, user_id: int, new_password: str, old_password: str):
         try:
             with db.begin():
                 user = db.query(User).filter(User.user_id == user_id).first()
                 if not user:
                     raise UserNotFoundError(user_id)
-                if not verify_password(user.password, new_password):
+                if not verify_password(old_password, user.password):
                     raise UserInvalidPassword()
 
                 user.password = get_password_hash(new_password)
-                db.refresh(user)
         except SQLAlchemyError as e:
             raise UserUpdatePasswordError(f"{user_id}: {str(e)}")

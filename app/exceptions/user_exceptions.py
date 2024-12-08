@@ -5,13 +5,12 @@ class UserError(Exception):
 class UserNotFoundError(UserError):
     def __init__(self, user_id: int):
         self.user_id = user_id
-        super().__init__(f"Transaction with ID {user_id} not found.")
+        super().__init__(f"User with ID {user_id} not found.")
 
 
 class UserEmailNotFoundError(UserError):
     def __init__(self, email: str):
-        self.email = email
-        super().__init__(f"Transaction with email: {email} not found.")
+        super().__init__(f"User with email: {email} not found.")
 
 class UserLoginDataError(UserError):
     def __init__(self):

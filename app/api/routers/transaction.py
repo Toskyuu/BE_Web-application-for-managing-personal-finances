@@ -4,7 +4,8 @@ from app.database.postgres_utils import get_db
 from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate
 from app.database.repositories.transaction import TransactionRepository
 from app.exceptions.transaction_exceptions import TransactionUserNotFoundError, TransactionAccountNotFoundError, \
-    TransactionNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError
+    TransactionNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
+    TransactionCategoryNotFoundError
 
 transaction_router = APIRouter(
     prefix="/transactions",
@@ -46,6 +47,8 @@ def create_transaction(transaction: TransactionCreate, db: Session = Depends(get
         raise HTTPException(status_code=400, detail=str(e))
     except TransactionAccountNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except TransactionCategoryNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @transaction_router.put("/{transaction_id}")
@@ -59,6 +62,8 @@ def update_transaction(transaction_id: int, transaction_update: TransactionUpdat
         raise HTTPException(status_code=400, detail=str(e))
     except TransactionUpdateError as e:
         raise HTTPException(status_code=500, detail=str(e))
+    except TransactionCategoryNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @transaction_router.delete("/{transaction_id}")

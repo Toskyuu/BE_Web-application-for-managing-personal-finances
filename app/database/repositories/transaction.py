@@ -3,11 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate
 from app.database.models.account import Account
+from app.database.models.category import Category
 from app.database.models.enums import TransactionType
 from app.database.models.transaction import Transaction
 from app.database.models.user import User
 from app.exceptions.transaction_exceptions import TransactionNotFoundError, TransactionUserNotFoundError, \
-    TransactionAccountNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError
+    TransactionAccountNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
+    TransactionCategoryNotFoundError
 
 
 class TransactionRepository:
@@ -15,7 +17,7 @@ class TransactionRepository:
     def get_transaction(db: Session, transaction_id: int):
         transaction = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
         if not transaction:
-            raise TransactionNotFoundError
+            raise TransactionNotFoundError(transaction_id)
         return transaction
 
     @staticmethod
@@ -39,8 +41,12 @@ class TransactionRepository:
         try:
             with db.begin():
                 account_1 = db.query(Account).filter(Account.account_id == transaction.account_id).one_or_none()
+                category = db.query(Category).filter(Category.category_id == transaction.category_id).one_or_none()
                 if not account_1:
                     raise TransactionAccountNotFoundError(transaction.account_id)
+
+                if not category:
+                    raise TransactionCategoryNotFoundError(transaction.category_id)
 
                 if transaction.type == TransactionType.INTERNAL:
                     account_2 = db.query(Account).filter(Account.account_id == transaction.account_id_2).one_or_none()
@@ -55,7 +61,6 @@ class TransactionRepository:
                 TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
 
                 db.add(new_transaction)
-                db.refresh(new_transaction)
 
                 return new_transaction
 
@@ -68,7 +73,21 @@ class TransactionRepository:
             with db.begin():
                 transaction = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
                 if not transaction:
-                    raise TransactionNotFoundError
+                    raise TransactionNotFoundError(transaction_id)
+                if transaction_update.category_id:
+                    category = db.query(Category).filter(Category.category_id == transaction_update.category_id).first()
+                    if not category:
+                        raise TransactionCategoryNotFoundError(transaction_update.category_id)
+                if transaction_update.account_id:
+                    account = db.query(Account).filter(
+                        Account.account_id == transaction_update.account_id).first()
+                    if not account:
+                        raise TransactionAccountNotFoundError(transaction_update.account_id)
+                if transaction_update.account_id_2:
+                    account_2 = db.query(Account).filter(
+                        Account.account_id == transaction_update.account_id_2).first()
+                    if not account_2:
+                        raise TransactionAccountNotFoundError(transaction_update.account_id_2)
 
                 previous_amount = transaction.amount
                 updated_transaction = transaction_update.model_dump(exclude_unset=True)
@@ -80,8 +99,7 @@ class TransactionRepository:
                     amount_difference = updated_transaction['amount'] - previous_amount
                     TransactionRepository.update_account_balance(db, transaction, amount_difference)
 
-                db.refresh(transaction)
-                return transaction
+            return db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
         except SQLAlchemyError as e:
             raise TransactionUpdateError(str(e))
 
@@ -118,11 +136,10 @@ class TransactionRepository:
             with db.begin():
                 transaction = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
                 if not transaction:
-                    raise TransactionNotFoundError
+                    raise TransactionNotFoundError(transaction_id)
                 TransactionRepository.update_account_balance(db, transaction, -transaction.amount)
 
                 db.delete(transaction)
-                db.refresh(transaction)
                 return True
         except SQLAlchemyError as e:
             raise TransactionDeleteError(str(e))

@@ -1,10 +1,11 @@
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from app.database.models.budget import Budget as BudgetModel
+
 from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage
-from app.database.models.transaction import Transaction
+from app.database.models.budget import Budget as BudgetModel
 from app.database.models.enums import TransactionType
+from app.database.models.transaction import Transaction
 from app.database.models.user import User
 from app.exceptions.budget_exceptions import BudgetNotFoundError, BudgetUserNotFoundError, BudgetCreationError, \
     BudgetUpdateError, BudgetDeleteError
@@ -46,16 +47,14 @@ class BudgetRepository:
         )
 
     @staticmethod
-    def get_budgets_by_user(db: Session, user_id: int, month: int, year: int) -> list[BudgetUsage]:
+    def get_budgets_by_user(db: Session, user_id: int) -> list[BudgetUsage]:
         user = db.query(User).filter(User.user_id == user_id).first()
         if not user:
             raise BudgetUserNotFoundError(user_id)
         budgets = (
             db.query(BudgetModel)
             .filter(
-                BudgetModel.user_id == user_id,
-                func.extract("month", BudgetModel.month_year) == month,
-                func.extract("year", BudgetModel.month_year) == year,
+                BudgetModel.user_id == user_id
             )
             .all()
         )
@@ -101,8 +100,7 @@ class BudgetRepository:
                 for key, value in updated_budget.items():
                     setattr(budget, key, value)
 
-                db.refresh(budget)
-                return budget
+            return db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
         except SQLAlchemyError as e:
             raise BudgetUpdateError(str(e))
 
@@ -110,7 +108,7 @@ class BudgetRepository:
     def delete_budget(db: Session, budget_id: int) -> bool:
         try:
             with db.begin():
-                budget = db.query(Budget).filter(Budget.budget_id == budget_id).first()
+                budget = db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
                 if not budget:
                     raise BudgetNotFoundError(budget_id)
 
