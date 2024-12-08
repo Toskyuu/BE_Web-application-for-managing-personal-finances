@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserBase(BaseModel):
-    email: EmailStr = Field(..., description="A valid email address.")
+    email: EmailStr
     password: str
 
     @field_validator("password")
@@ -28,7 +28,7 @@ class UserCreate(UserBase):
 
 class UserLogin(BaseModel):
     password: str
-    email: EmailStr = Field(..., description="A valid email address.")
+    email: EmailStr
 
 
 class UserUpdatePassword(UserBase):

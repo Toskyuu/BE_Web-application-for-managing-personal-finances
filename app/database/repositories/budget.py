@@ -1,11 +1,14 @@
-from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
-from app.database.models.budget import Budget as BudgetModel
+
 from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage
-from app.database.models.transaction import Transaction
+from app.database.models.budget import Budget as BudgetModel
 from app.database.models.enums import TransactionType
+from app.database.models.transaction import Transaction
+from app.database.models.user import User
+from app.exceptions.budget_exceptions import BudgetNotFoundError, BudgetUserNotFoundError, BudgetCreationError, \
+    BudgetUpdateError, BudgetDeleteError
 
 
 class BudgetRepository:
@@ -13,7 +16,7 @@ class BudgetRepository:
     def get_spent(db: Session, budget_id: int) -> float:
         budget = db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
         if not budget:
-            raise HTTPException(status_code=404, detail="Budget not found")
+            raise BudgetNotFoundError(budget_id)
 
         spent_amount = (
                 db.query(func.sum(Transaction.amount))
@@ -32,7 +35,7 @@ class BudgetRepository:
     def get_budget(db: Session, budget_id: int) -> BudgetUsage:
         budget = db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
         if not budget:
-            raise HTTPException(status_code=404, detail="Budget not found")
+            raise BudgetNotFoundError(budget_id)
 
         return BudgetUsage(
             budget_id=budget.budget_id,
@@ -44,13 +47,14 @@ class BudgetRepository:
         )
 
     @staticmethod
-    def get_budgets_by_user(db: Session, user_id: int, month: int, year: int) -> list[BudgetUsage]:
+    def get_budgets_by_user(db: Session, user_id: int) -> list[BudgetUsage]:
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise BudgetUserNotFoundError(user_id)
         budgets = (
             db.query(BudgetModel)
             .filter(
-                BudgetModel.user_id == user_id,
-                func.extract("month", BudgetModel.month_year) == month,
-                func.extract("year", BudgetModel.month_year) == year,
+                BudgetModel.user_id == user_id
             )
             .all()
         )
@@ -69,33 +73,47 @@ class BudgetRepository:
 
     @staticmethod
     def create_budget(db: Session, budget: BudgetCreate, user_id: int) -> Budget:
+        try:
+            user = db.query(User).filter(User.user_id == user_id).first()
+            if not user:
+                raise BudgetUserNotFoundError(user_id)
 
-        db_budget = BudgetModel(**budget.model_dump(), user_id=user_id)
-        db.add(db_budget)
-        db.commit()
-        db.refresh(db_budget)
-        return db_budget
+            db_budget = BudgetModel(**budget.model_dump(), user_id=user_id)
+            db.add(db_budget)
+            db.commit()
+            db.refresh(db_budget)
+            return db_budget
+        except SQLAlchemyError as e:
+            raise BudgetCreationError(str(e))
 
     @staticmethod
     def update_budget(
             db: Session, budget_id: int, budget_update: BudgetUpdate) -> Budget:
-        budget = db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
+        try:
+            with db.begin():
+                budget = db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
+                if not budget:
+                    raise BudgetNotFoundError(budget_id)
 
-        updated_budget = budget_update.model_dump(exclude_unset=True)
+                updated_budget = budget_update.model_dump(exclude_unset=True)
 
-        for key, value in updated_budget.items():
-            setattr(budget, key, value)
+                for key, value in updated_budget.items():
+                    setattr(budget, key, value)
 
-        db.commit()
-
-        db.refresh(budget)
-        return budget
+            return db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
+        except SQLAlchemyError as e:
+            raise BudgetUpdateError(str(e))
 
     @staticmethod
     def delete_budget(db: Session, budget_id: int) -> bool:
-        budget = db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
-        if budget:
-            db.delete(budget)
-            db.commit()
-            return True
-        return False
+        try:
+            with db.begin():
+                budget = db.query(BudgetModel).filter(BudgetModel.budget_id == budget_id).first()
+                if not budget:
+                    raise BudgetNotFoundError(budget_id)
+
+                db.delete(budget)
+
+                return True
+        except SQLAlchemyError as e:
+            raise BudgetDeleteError(str(e))
