@@ -2,10 +2,10 @@ import enum
 
 
 class AccountType(str, enum.Enum):
-    CHECKING = "Rozliczeniowe"
-    SAVINGS = "Oszczędnościowe"
-    WALLET = "Portfel"
-    PIGGY_BANK = "Skarbonka"
+    CHECKING = "Checking"
+    SAVINGS = "Savings"
+    WALLET = "Wallet"
+    PIGGY_BANK = "Piggy"
 
 class TransactionType(str, enum.Enum):
     INCOME = "Income"

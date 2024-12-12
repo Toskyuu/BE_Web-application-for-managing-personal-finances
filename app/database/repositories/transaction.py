@@ -7,7 +7,6 @@ from app.database.models.category import Category
 from app.database.models.enums import TransactionType
 from app.database.models.transaction import Transaction
 from app.database.models.user import User
-from app.database.utils import calculate_next_occurrence
 from app.exceptions.transaction_exceptions import TransactionNotFoundError, TransactionUserNotFoundError, \
     TransactionAccountNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
     TransactionCategoryNotFoundError
@@ -59,12 +58,7 @@ class TransactionRepository:
                     if not account_2:
                         raise TransactionAccountNotFoundError(transaction.account_id_2)
 
-
                 new_transaction = Transaction(**transaction.model_dump(), user_id=user.user_id)
-
-                if transaction.is_recurring:
-                    next_occurrence = calculate_next_occurrence(transaction)
-                    new_transaction.next_occurrence = next_occurrence
 
                 TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
                 db.add(new_transaction)
@@ -100,12 +94,6 @@ class TransactionRepository:
 
                 for key, value in updated_transaction.items():
                     setattr(transaction, key, value)
-
-                if "is_recurring" in updated_transaction:
-                    if transaction.is_recurring:
-                        transaction.next_occurrence = calculate_next_occurrence(transaction)
-                    else:
-                        transaction.next_occurrence = None
 
                 if 'amount' in updated_transaction:
                     amount_difference = updated_transaction['amount'] - previous_amount

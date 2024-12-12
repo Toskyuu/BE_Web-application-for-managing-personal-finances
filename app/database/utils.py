@@ -4,27 +4,28 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.api.schemas.Transaction import TransactionCreate, Transaction
+from app.api.schemas.RecurringTransaction import RecurringTransactionCreate
+from app.api.schemas.Transaction import Transaction
 from app.database.models.budget import Budget
 from app.database.models.enums import RecurringFrequency
 from app.database.models.enums import TransactionType
 from app.exceptions.budget_exceptions import BudgetNotFoundError
-from app.exceptions.transaction_exceptions import TransactionFrequencyNotFound
+from app.exceptions.recurring_transaction_exceptions import RecurringTransactionFrequencyNotFound
 
 
-def calculate_next_occurrence(transaction: TransactionCreate):
-    base_date = transaction.date or date.today()
+def calculate_next_occurrence(recurring_transaction: RecurringTransactionCreate):
+    base_date = recurring_transaction.date or date.today()
 
-    if transaction.recurring_frequency == RecurringFrequency.DAILY:
+    if recurring_transaction.recurring_frequency == RecurringFrequency.DAILY:
         return base_date + relativedelta(days=+1)
-    elif transaction.recurring_frequency == RecurringFrequency.WEEKLY:
+    elif recurring_transaction.recurring_frequency == RecurringFrequency.WEEKLY:
         return base_date + relativedelta(weeks=+1)
-    elif transaction.recurring_frequency == RecurringFrequency.BIWEEKLY:
+    elif recurring_transaction.recurring_frequency == RecurringFrequency.BIWEEKLY:
         return base_date + relativedelta(weeks=+2)
-    elif transaction.recurring_frequency == RecurringFrequency.MONTHLY:
+    elif recurring_transaction.recurring_frequency == RecurringFrequency.MONTHLY:
         return base_date + relativedelta(months=+1)
     else:
-        raise TransactionFrequencyNotFound(transaction.recurring_frequency)
+        raise RecurringTransactionFrequencyNotFound(recurring_transaction.recurring_frequency)
 
 
 def get_spent(db: Session, budget_id: int) -> float:
