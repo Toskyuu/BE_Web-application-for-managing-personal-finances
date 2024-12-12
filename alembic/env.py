@@ -9,6 +9,7 @@ from app.database.models.account import Account
 from app.database.models.transaction import Transaction
 from app.database.models.budget import Budget
 from app.database.models.category import Category
+from app.database.models.recurring_transaction import RecurringTransaction
 
 POSTGRES_HOST = "localhost"
 # this is the Alembic Config object, which provides

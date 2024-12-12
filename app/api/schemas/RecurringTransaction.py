@@ -46,7 +46,6 @@ class RecurringTransactionUpdate(RecurringTransactionBase):
     recurring_frequency: Optional[RecurringFrequency] = None
     start_date: Optional[dtdate] = None
     next_occurrence: Optional[dtdate] = None
-    end_date: Optional[dtdate] = None
     category_id: Optional[int] = None
     account_id: Optional[int] = None
     account_id_2: Optional[int] = None

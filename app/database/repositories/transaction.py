@@ -37,38 +37,6 @@ class TransactionRepository:
         ).all()
 
     @staticmethod
-    def create_transaction(db: Session, transaction: TransactionCreate, user_id: int):
-        try:
-            with db.begin():
-                user = db.query(User).filter(User.user_id == user_id).first()
-                account_1 = db.query(Account).filter(Account.account_id == transaction.account_id).one_or_none()
-                category = db.query(Category).filter(Category.category_id == transaction.category_id).one_or_none()
-                if not account_1:
-                    raise TransactionAccountNotFoundError(transaction.account_id)
-
-                if not user:
-                    raise TransactionUserNotFoundError(user_id)
-
-                if not category:
-                    raise TransactionCategoryNotFoundError(transaction.category_id)
-
-                if transaction.type == TransactionType.INTERNAL:
-                    account_2 = db.query(Account).filter(
-                        Account.account_id == transaction.account_id_2).one_or_none()
-                    if not account_2:
-                        raise TransactionAccountNotFoundError(transaction.account_id_2)
-
-                new_transaction = Transaction(**transaction.model_dump(), user_id=user.user_id)
-
-                TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
-                db.add(new_transaction)
-
-                return new_transaction
-
-        except SQLAlchemyError as e:
-            raise TransactionCreationError(str(e))
-
-    @staticmethod
     def update_transaction(db: Session, transaction_id: int, transaction_update: TransactionUpdate) -> Transaction:
         try:
             with db.begin():
@@ -102,6 +70,70 @@ class TransactionRepository:
             return db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
         except SQLAlchemyError as e:
             raise TransactionUpdateError(str(e))
+
+    @staticmethod
+    def create_transaction(db: Session, transaction: TransactionCreate, user_id: int):
+        try:
+            with db.begin():
+                user = db.query(User).filter(User.user_id == user_id).first()
+                account_1 = db.query(Account).filter(Account.account_id == transaction.account_id).one_or_none()
+                category = db.query(Category).filter(Category.category_id == transaction.category_id).one_or_none()
+                if not account_1:
+                    raise TransactionAccountNotFoundError(transaction.account_id)
+
+                if not user:
+                    raise TransactionUserNotFoundError(user_id)
+
+                if not category:
+                    raise TransactionCategoryNotFoundError(transaction.category_id)
+
+                if transaction.type == TransactionType.INTERNAL:
+                    account_2 = db.query(Account).filter(
+                        Account.account_id == transaction.account_id_2).one_or_none()
+                    if not account_2:
+                        raise TransactionAccountNotFoundError(transaction.account_id_2)
+
+                new_transaction = Transaction(**transaction.model_dump(), user_id=user.user_id)
+
+                TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
+                db.add(new_transaction)
+
+                return new_transaction
+
+        except SQLAlchemyError as e:
+            raise TransactionCreationError(str(e))
+
+    @staticmethod
+    def create_transaction_in_background(db: Session, transaction: TransactionCreate, user_id: int):
+        try:
+            user = db.query(User).filter(User.user_id == user_id).first()
+            account_1 = db.query(Account).filter(Account.account_id == transaction.account_id).one_or_none()
+            category = db.query(Category).filter(Category.category_id == transaction.category_id).one_or_none()
+            if not account_1:
+                raise TransactionAccountNotFoundError(transaction.account_id)
+
+            if not user:
+                raise TransactionUserNotFoundError(user_id)
+
+            if not category:
+                raise TransactionCategoryNotFoundError(transaction.category_id)
+
+            if transaction.type == TransactionType.INTERNAL:
+                account_2 = db.query(Account).filter(
+                    Account.account_id == transaction.account_id_2).one_or_none()
+                if not account_2:
+                    raise TransactionAccountNotFoundError(transaction.account_id_2)
+
+            new_transaction = Transaction(**transaction.model_dump(), user_id=user.user_id)
+
+            TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
+            db.add(new_transaction)
+            db.flush()
+            return new_transaction
+
+        except SQLAlchemyError as e:
+            db.rollback()
+            raise TransactionCreationError(str(e))
 
     @staticmethod
     def update_account_balance(db: Session, transaction: Transaction, amount_difference: float):

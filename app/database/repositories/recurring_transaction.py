@@ -65,8 +65,9 @@ class RecurringTransactionRepository:
 
                 new_transaction = RecurringTransaction(**recurring_transaction.model_dump(), user_id=user.user_id)
 
-                next_occurrence = calculate_next_occurrence(recurring_transaction)
-                new_transaction.next_occurrence = next_occurrence
+                if not new_transaction.next_occurrence:
+                    next_occurrence = calculate_next_occurrence(recurring_transaction.recurring_frequency, recurring_transaction.start_date)
+                    new_transaction.next_occurrence = next_occurrence
 
                 RecurringTransactionRepository.update_account_balance(db, new_transaction, recurring_transaction.amount)
                 db.add(new_transaction)

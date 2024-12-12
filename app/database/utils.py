@@ -13,19 +13,19 @@ from app.exceptions.budget_exceptions import BudgetNotFoundError
 from app.exceptions.recurring_transaction_exceptions import RecurringTransactionFrequencyNotFound
 
 
-def calculate_next_occurrence(recurring_transaction: RecurringTransactionCreate):
-    base_date = recurring_transaction.date or date.today()
+def calculate_next_occurrence( rt_frequency: RecurringFrequency, rt_date: date = None) -> date:
+    base_date = rt_date or date.today()
 
-    if recurring_transaction.recurring_frequency == RecurringFrequency.DAILY:
+    if rt_frequency == RecurringFrequency.DAILY:
         return base_date + relativedelta(days=+1)
-    elif recurring_transaction.recurring_frequency == RecurringFrequency.WEEKLY:
+    elif rt_frequency == RecurringFrequency.WEEKLY:
         return base_date + relativedelta(weeks=+1)
-    elif recurring_transaction.recurring_frequency == RecurringFrequency.BIWEEKLY:
+    elif rt_frequency == RecurringFrequency.BIWEEKLY:
         return base_date + relativedelta(weeks=+2)
-    elif recurring_transaction.recurring_frequency == RecurringFrequency.MONTHLY:
+    elif rt_frequency == RecurringFrequency.MONTHLY:
         return base_date + relativedelta(months=+1)
     else:
-        raise RecurringTransactionFrequencyNotFound(recurring_transaction.recurring_frequency)
+        raise RecurringTransactionFrequencyNotFound(rt_frequency)
 
 
 def get_spent(db: Session, budget_id: int) -> float:

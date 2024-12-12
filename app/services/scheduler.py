@@ -2,20 +2,12 @@ from datetime import date
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.api.schemas.Transaction import TransactionCreate
-from app.database.models.account import Account
-from app.database.models.category import Category
-from app.database.models.enums import TransactionType
 from app.database.models.recurring_transaction import RecurringTransaction
-from app.database.models.transaction import Transaction
-from app.database.models.user import User
 from app.database.repositories.transaction import TransactionRepository
 from app.database.utils import calculate_next_occurrence
-from app.exceptions.transaction_exceptions import TransactionCreationError, TransactionAccountNotFoundError, \
-    TransactionCategoryNotFoundError, TransactionUserNotFoundError
 
 
 class RecurringTransactionScheduler:
@@ -52,17 +44,10 @@ class RecurringTransactionScheduler:
                             date=recurring_transaction.next_occurrence
                         )
 
-                        TransactionRepository.create_transaction(new_transaction_data, recurring_transaction.user_id)
+                        TransactionRepository.create_transaction_in_background(self.db_session ,new_transaction_data, recurring_transaction.user_id)
 
-                        recurring_transaction.next_occurrence = calculate_next_occurrence(transaction_data)
+                        recurring_transaction.next_occurrence = calculate_next_occurrence(
+                            recurring_transaction.recurring_frequency, recurring_transaction.next_occurrence)
 
-                    if transaction.next_occurrence > date.today():
-                        transaction.is_recurring = False
-                        transaction.recurring_frequency = None
-                        transaction.next_occurrence = None
-
-                        self.db_session.commit()
                 except Exception as e:
                     print(f"Failed to process transaction {recurring_transaction.recurring_transaction_id}: {e}")
-
-
