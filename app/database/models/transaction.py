@@ -19,6 +19,7 @@ class Transaction(Base):
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     type = Column(Enum(TransactionType), nullable=False)
 
+
     to_account = relationship(
         "Account", foreign_keys=[account_id], back_populates="transactions_to"
     )

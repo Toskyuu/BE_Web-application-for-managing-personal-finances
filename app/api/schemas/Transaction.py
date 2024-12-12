@@ -31,7 +31,6 @@ class TransactionCreate(TransactionBase):
     type: TransactionType
 
 
-
 class TransactionUpdate(TransactionBase):
     description: Optional[str] = None
     amount: Optional[float] = None
