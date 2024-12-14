@@ -1,42 +1,28 @@
-from datetime import datetime, timedelta
-import jwt
-from passlib.context import CryptContext
-
+from fastapi import Depends
+from fastapi_users.authentication import CookieTransport, JWTStrategy, AuthenticationBackend
 import os
 from dotenv import load_dotenv
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
+from fastapi_users.db import SQLAlchemyUserDatabase
+from app.database.models.user import User
+from app.database.postgres_utils import get_db
 
 load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
-ACCES_TOKEN_EXPIRE_MINUTES = float(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES'))
+JWT_LIFETIME_SECONDS = int(os.getenv("JWT_LIFETIME_SECONDS", 3600))
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+cookie_transport = CookieTransport(cookie_name="auth", cookie_max_age=JWT_LIFETIME_SECONDS)
 
+async def get_jwt_strategy() -> JWTStrategy:
+    return JWTStrategy(secret=SECRET_KEY, lifetime_seconds=JWT_LIFETIME_SECONDS)
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCES_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+auth_backend = AuthenticationBackend(
+    name="jwt",
+    transport=cookie_transport,
+    get_strategy=get_jwt_strategy,
+)
 
 
-def verify_token(token: str):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise ValueError("Token nie zawiera poprawnego sub")
-        return username
-    except jwt.ExpiredSignatureError:
-        raise ValueError("Token wygasł")
-    except jwt.InvalidTokenError:
-        raise ValueError("Błędny token")
