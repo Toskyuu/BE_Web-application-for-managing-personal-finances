@@ -16,7 +16,7 @@ class TransactionRepository:
     @staticmethod
     async def get_transaction(db: AsyncSession, transaction_id: int):
         async with db.begin():
-            result = await db.execute(select(Transaction).filter(Transaction.transaction_id == transaction_id))
+            result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
             transaction = result.scalars().first()
             if not transaction:
                 raise TransactionNotFoundError(transaction_id)
@@ -25,7 +25,7 @@ class TransactionRepository:
     @staticmethod
     async def get_transactions_by_user(db: AsyncSession, user_id: int):
         async with db.begin():
-            result = await db.execute(select(User).filter(User.user_id == user_id))
+            result = await db.execute(select(User).filter(User.id == user_id))
             user = result.scalars().first()
             if not user:
                 raise TransactionUserNotFoundError(user_id)
@@ -36,7 +36,7 @@ class TransactionRepository:
     @staticmethod
     async def get_transactions_by_account(db: AsyncSession, account_id: int):
         async with db.begin():
-            result = await db.execute(select(Account).filter(Account.account_id == account_id))
+            result = await db.execute(select(Account).filter(Account.id == account_id))
             account = result.scalars().first()
             if not account:
                 raise TransactionAccountNotFoundError(account_id)
@@ -50,25 +50,25 @@ class TransactionRepository:
     async def update_transaction(db: AsyncSession, transaction_id: int, transaction_update: TransactionUpdate) -> Transaction:
         try:
             async with db.begin():
-                result = await db.execute(select(Transaction).filter(Transaction.transaction_id == transaction_id))
+                result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
                 transaction = result.scalars().first()
                 if not transaction:
                     raise TransactionNotFoundError(transaction_id)
 
                 if transaction_update.category_id:
-                    category_result = await db.execute(select(Category).filter(Category.category_id == transaction_update.category_id))
+                    category_result = await db.execute(select(Category).filter(Category.id == transaction_update.category_id))
                     category = category_result.scalars().first()
                     if not category:
                         raise TransactionCategoryNotFoundError(transaction_update.category_id)
 
                 if transaction_update.account_id:
-                    account_result = await db.execute(select(Account).filter(Account.account_id == transaction_update.account_id))
+                    account_result = await db.execute(select(Account).filter(Account.id == transaction_update.account_id))
                     account = account_result.scalars().first()
                     if not account:
                         raise TransactionAccountNotFoundError(transaction_update.account_id)
 
                 if transaction_update.account_id_2:
-                    account_2_result = await db.execute(select(Account).filter(Account.account_id == transaction_update.account_id_2))
+                    account_2_result = await db.execute(select(Account).filter(Account.id == transaction_update.account_id_2))
                     account_2 = account_2_result.scalars().first()
                     if not account_2:
                         raise TransactionAccountNotFoundError(transaction_update.account_id_2)
@@ -83,7 +83,7 @@ class TransactionRepository:
                     amount_difference = updated_transaction['amount'] - previous_amount
                     await TransactionRepository.update_account_balance(db, transaction, amount_difference)
 
-            result = await db.execute(select(Transaction).filter(Transaction.transaction_id == transaction_id))
+            result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
             return result.scalars().first()
         except SQLAlchemyError as e:
             raise TransactionUpdateError(str(e))
@@ -92,28 +92,28 @@ class TransactionRepository:
     async def create_transaction(db: AsyncSession, transaction: TransactionCreate, user_id: int):
         try:
             async with db.begin():
-                result = await db.execute(select(User).filter(User.user_id == user_id))
+                result = await db.execute(select(User).filter(User.id == user_id))
                 user = result.scalars().first()
                 if not user:
                     raise TransactionUserNotFoundError(user_id)
 
-                account_1_result = await db.execute(select(Account).filter(Account.account_id == transaction.account_id))
+                account_1_result = await db.execute(select(Account).filter(Account.id == transaction.account_id))
                 account_1 = account_1_result.scalars().first()
                 if not account_1:
                     raise TransactionAccountNotFoundError(transaction.account_id)
 
-                category_result = await db.execute(select(Category).filter(Category.category_id == transaction.category_id))
+                category_result = await db.execute(select(Category).filter(Category.id == transaction.category_id))
                 category = category_result.scalars().first()
                 if not category:
                     raise TransactionCategoryNotFoundError(transaction.category_id)
 
                 if transaction.type == TransactionType.INTERNAL:
-                    account_2_result = await db.execute(select(Account).filter(Account.account_id == transaction.account_id_2))
+                    account_2_result = await db.execute(select(Account).filter(Account.id == transaction.account_id_2))
                     account_2 = account_2_result.scalars().first()
                     if not account_2:
                         raise TransactionAccountNotFoundError(transaction.account_id_2)
 
-                new_transaction = Transaction(**transaction.model_dump(), user_id=user.user_id)
+                new_transaction = Transaction(**transaction.model_dump(), user_id=user.id)
 
                 await TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
                 db.add(new_transaction)
@@ -126,7 +126,7 @@ class TransactionRepository:
     @staticmethod
     async def update_account_balance(db: AsyncSession, transaction: Transaction, amount_difference: float):
         if transaction.type == TransactionType.INCOME:
-            result = await db.execute(select(Account).filter(Account.account_id == transaction.account_id))
+            result = await db.execute(select(Account).filter(Account.id == transaction.account_id))
             account = result.scalars().first()
             if account:
                 account.balance += amount_difference
@@ -134,7 +134,7 @@ class TransactionRepository:
                 raise TransactionAccountNotFoundError(transaction.account_id)
 
         elif transaction.type == TransactionType.OUTCOME:
-            result = await db.execute(select(Account).filter(Account.account_id == transaction.account_id))
+            result = await db.execute(select(Account).filter(Account.id == transaction.account_id))
             account = result.scalars().first()
             if account:
                 account.balance -= amount_difference
@@ -142,10 +142,10 @@ class TransactionRepository:
                 raise TransactionAccountNotFoundError(transaction.account_id)
 
         elif transaction.type == TransactionType.INTERNAL:
-            result_1 = await db.execute(select(Account).filter(Account.account_id == transaction.account_id))
+            result_1 = await db.execute(select(Account).filter(Account.id == transaction.account_id))
             account_1 = result_1.scalars().first()
 
-            result_2 = await db.execute(select(Account).filter(Account.account_id == transaction.account_id_2))
+            result_2 = await db.execute(select(Account).filter(Account.id == transaction.account_id_2))
             account_2 = result_2.scalars().first()
 
             if account_1 and account_2:
@@ -160,7 +160,7 @@ class TransactionRepository:
     async def delete_transaction(db: AsyncSession, transaction_id: int) -> bool:
         try:
             async with db.begin():
-                result = await db.execute(select(Transaction).filter(Transaction.transaction_id == transaction_id))
+                result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
                 transaction = result.scalars().first()
                 if not transaction:
                     raise TransactionNotFoundError(transaction_id)

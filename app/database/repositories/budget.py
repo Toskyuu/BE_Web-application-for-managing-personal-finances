@@ -14,23 +14,23 @@ class BudgetRepository:
 
     @staticmethod
     async def get_budget(db: AsyncSession, budget_id: int) -> BudgetUsage:
-        result = await db.execute(select(BudgetModel).filter(BudgetModel.budget_id == budget_id))
+        result = await db.execute(select(BudgetModel).filter(BudgetModel.id == budget_id))
         budget = result.scalars().first()
         if not budget:
             raise BudgetNotFoundError(budget_id)
 
         return BudgetUsage(
-            budget_id=budget.budget_id,
+            budget_id=Budget.id,
             category_id=budget.category_id,
             limit=budget.limit,
             month_year=budget.month_year,
             user_id=budget.user_id,
-            spent_in_budget=await get_spent(db, budget.budget_id)
+            spent_in_budget=await get_spent(db, Budget.id)
         )
 
     @staticmethod
     async def get_budgets_by_user(db: AsyncSession, user_id: int) -> list[BudgetUsage]:
-        user = await db.execute(select(User).filter(User.user_id == user_id))
+        user = await db.execute(select(User).filter(User.id == user_id))
         user = user.scalars().first()
         if not user:
             raise BudgetUserNotFoundError(user_id)
@@ -40,12 +40,12 @@ class BudgetRepository:
 
         return [
             BudgetUsage(
-                budget_id=budget.budget_id,
+                budget_id=Budget.id,
                 category_id=budget.category_id,
                 limit=budget.limit,
                 month_year=budget.month_year,
                 user_id=budget.user_id,
-                spent_in_budget=await get_spent(db, budget.budget_id),
+                spent_in_budget=await get_spent(db, Budget.id),
             )
             for budget in budgets
         ]
@@ -53,7 +53,7 @@ class BudgetRepository:
     @staticmethod
     async def create_budget(db: AsyncSession, budget: BudgetCreate, user_id: int) -> Budget:
         try:
-            user = await db.execute(select(User).filter(User.user_id == user_id))
+            user = await db.execute(select(User).filter(User.id == user_id))
             user = user.scalars().first()
             if not user:
                 raise BudgetUserNotFoundError(user_id)
@@ -71,7 +71,7 @@ class BudgetRepository:
             db: AsyncSession, budget_id: int, budget_update: BudgetUpdate) -> Budget:
         try:
             async with db.begin():
-                result = await db.execute(select(BudgetModel).filter(BudgetModel.budget_id == budget_id))
+                result = await db.execute(select(BudgetModel).filter(BudgetModel.id == budget_id))
                 budget = result.scalars().first()
                 if not budget:
                     raise BudgetNotFoundError(budget_id)
@@ -81,7 +81,9 @@ class BudgetRepository:
                 for key, value in updated_budget.items():
                     setattr(budget, key, value)
 
-            return await db.execute(select(BudgetModel).filter(BudgetModel.budget_id == budget_id)).scalars().first()
+            result = await db.execute(select(BudgetModel).filter(BudgetModel.id == budget_id))
+            budget = result.scalars().first()
+            return budget
         except SQLAlchemyError as e:
             raise BudgetUpdateError(str(e))
 
@@ -89,7 +91,7 @@ class BudgetRepository:
     async def delete_budget(db: AsyncSession, budget_id: int) -> bool:
         try:
             async with db.begin():
-                result = await db.execute(select(BudgetModel).filter(BudgetModel.budget_id == budget_id))
+                result = await db.execute(select(BudgetModel).filter(BudgetModel.id == budget_id))
                 budget = result.scalars().first()
                 if not budget:
                     raise BudgetNotFoundError(budget_id)

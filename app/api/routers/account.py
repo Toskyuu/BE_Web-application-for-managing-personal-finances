@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.postgres_utils import get_db
 from app.api.schemas.Account import Account, AccountCreate, AccountUpdate
 from app.database.repositories.account import AccountRepository
-from app.exceptions.account_exceptions import AccountNotFoundError, AccountCreationError, AccountUpdateError, \
-    AccountUserNotFoundError, AccountDeleteError
+from app.exceptions.account_exceptions import (
+    AccountNotFoundError,
+    AccountCreationError,
+    AccountUpdateError,
+    AccountUserNotFoundError,
+    AccountDeleteError
+)
 
 account_router = APIRouter(
     prefix="/accounts",
@@ -13,37 +18,39 @@ account_router = APIRouter(
 
 
 @account_router.get("/", response_model=list[Account])
-def list_accounts(user_id: int, db: Session = Depends(get_db)):
+async def list_accounts(user_id: int, db: AsyncSession = Depends(get_db)):
     try:
-        return AccountRepository.get_accounts_by_user(db, user_id=user_id)
+        return await AccountRepository.get_accounts_by_user(db, user_id=user_id)
     except AccountUserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
 @account_router.get("/{account_id}", response_model=Account)
-def get_account(account_id: int, db: Session = Depends(get_db)):
+async def get_account(account_id: int, db: AsyncSession = Depends(get_db)):
     try:
-        return AccountRepository.get_account(db, account_id=account_id)
+        return await AccountRepository.get_account(db, account_id=account_id)
     except AccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
-
-
 @account_router.post("/", response_model=Account)
-def create_account(account: AccountCreate, user_id: int, db: Session = Depends(get_db)):
+async def create_account(account: AccountCreate, user_id: int, db: AsyncSession = Depends(get_db)):
     try:
-        return AccountRepository.create_account(db, account=account, user_id=user_id)
+        return await AccountRepository.create_account(db, account=account, user_id=user_id)
     except AccountCreationError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except AccountUserNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @account_router.put("/{account_id}")
-def update_account_initial_balance(account_id: int, account_update: AccountUpdate,
-                                         db: Session = Depends(get_db)):
+async def update_account_initial_balance(
+    account_id: int,
+    account_update: AccountUpdate,
+    db: AsyncSession = Depends(get_db)
+):
     try:
-        updated_account = AccountRepository.update_account(db, account_id, account_update)
+        updated_account = await AccountRepository.update_account(db, account_id, account_update)
         return updated_account
     except AccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -52,9 +59,9 @@ def update_account_initial_balance(account_id: int, account_update: AccountUpdat
 
 
 @account_router.delete("/{account_id}")
-def delete_account(account_id: int, db: Session = Depends(get_db)):
+async def delete_account(account_id: int, db: AsyncSession = Depends(get_db)):
     try:
-        AccountRepository.delete_account(db, account_id)
+        await AccountRepository.delete_account(db, account_id)
         return {"message": "Account deleted successfully"}
     except AccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

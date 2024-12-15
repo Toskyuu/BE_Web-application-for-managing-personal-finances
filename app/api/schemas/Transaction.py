@@ -42,7 +42,7 @@ class TransactionUpdate(TransactionBase):
 
 
 class Transaction(BaseModel):
-    transaction_id: int
+    id: int
     category_id: int
     account_id: int
     account_id_2: Optional[int] = None

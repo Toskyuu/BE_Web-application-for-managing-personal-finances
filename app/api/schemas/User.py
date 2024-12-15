@@ -1,12 +1,15 @@
+import re
+
 from fastapi_users import schemas
 from pydantic import BaseModel, EmailStr, field_validator
-import re
+
+
+class UserBase(BaseModel):
+    email: EmailStr
 
 
 class UserCreate(schemas.BaseUserCreate):
     username: str
-    email: EmailStr
-    password: str
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -22,8 +25,10 @@ class UserCreate(schemas.BaseUserCreate):
             raise ValueError("Username must be between 3 and 30 characters.")
         return value
 
+
 class UserRead(schemas.BaseUser[int]):
-    pass
+    id: int
+
 
 class UserUpdate(schemas.BaseUserUpdate):
 

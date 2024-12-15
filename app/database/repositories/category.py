@@ -13,7 +13,7 @@ class CategoryRepository:
     @staticmethod
     async def get_category(db: AsyncSession, category_id: int):
         result = await db.execute(select(Category).filter(
-            Category.category_id == category_id,
+            Category.id == category_id,
             Category.deleted == False
         ))
         category = result.scalars().first()
@@ -23,7 +23,7 @@ class CategoryRepository:
 
     @staticmethod
     async def get_categories_by_user(db: AsyncSession, user_id: int):
-        result = await db.execute(select(User).filter(User.user_id == user_id))
+        result = await db.execute(select(User).filter(User.id == user_id))
         user = result.scalars().first()
         if not user:
             raise CategoryUserNotFoundError(user_id)
@@ -37,7 +37,7 @@ class CategoryRepository:
     @staticmethod
     async def create_category(db: AsyncSession, category: CategoryCreate, user_id: int):
         try:
-            result = await db.execute(select(User).filter(User.user_id == user_id))
+            result = await db.execute(select(User).filter(User.id == user_id))
             user = result.scalars().first()
             if not user:
                 raise CategoryUserNotFoundError(user_id)
@@ -55,7 +55,7 @@ class CategoryRepository:
             db: AsyncSession, category_id: int, category_update: CategoryUpdate) -> Category:
         try:
             async with db.begin():
-                result = await db.execute(select(Category).filter(Category.category_id == category_id))
+                result = await db.execute(select(Category).filter(Category.id == category_id))
                 category = result.scalars().first()
                 if not category:
                     raise CategoryNotFoundError(category_id)
@@ -65,7 +65,7 @@ class CategoryRepository:
                 for key, value in updated_category.items():
                     setattr(category, key, value)
 
-            result = await db.execute(select(Category).filter(Category.category_id == category_id))
+            result = await db.execute(select(Category).filter(Category.id == category_id))
             return result.scalars().first()
 
         except SQLAlchemyError as e:
@@ -75,7 +75,7 @@ class CategoryRepository:
     async def delete_category(db: AsyncSession, category_id: int) -> bool:
         try:
             async with db.begin():
-                result = await db.execute(select(Category).filter(Category.category_id == category_id))
+                result = await db.execute(select(Category).filter(Category.id == category_id))
                 category = result.scalars().first()
                 if not category:
                     raise CategoryNotFoundError(category_id)

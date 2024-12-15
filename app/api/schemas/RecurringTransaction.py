@@ -53,7 +53,7 @@ class RecurringTransactionUpdate(RecurringTransactionBase):
 
 
 class RecurringTransaction(BaseModel):
-    recurring_transaction_id: int
+    id: int
     description: Optional[str]
     amount: float
     category_id: int

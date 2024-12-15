@@ -6,10 +6,10 @@ from app.database.models.enums import AccountType
 class Account(Base):
     __tablename__ = "accounts"
 
-    account_id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     type = Column(Enum(AccountType), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     initial_balance = Column(Float, nullable=False, default=0.0)
     balance = Column(Float, nullable=False)
     deleted = Column(Boolean, default=False)

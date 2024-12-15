@@ -20,7 +20,7 @@ class AccountUpdate(BaseModel):
 
 
 class Account(BaseModel):
-    account_id: int
+    id: int
     user_id: int
     balance: Optional[float] = None
     type: AccountType

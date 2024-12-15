@@ -10,7 +10,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
 
     __tablename__ = "users"
 
-    user_id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False)
 
 
