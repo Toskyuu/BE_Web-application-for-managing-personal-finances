@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.postgres_utils import get_db
 from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage
 from app.database.repositories.budget import BudgetRepository
-from app.exceptions.budget_exceptions import BudgetUserNotFoundError, BudgetNotFoundError, BudgetCreationError, \
-    BudgetUpdateError, BudgetDeleteError
+from app.exceptions.budget_exceptions import (
+    BudgetUserNotFoundError,
+    BudgetNotFoundError,
+    BudgetCreationError,
+    BudgetUpdateError,
+    BudgetDeleteError
+)
 
 budget_router = APIRouter(
     prefix="/budgets",
@@ -13,9 +18,9 @@ budget_router = APIRouter(
 
 
 @budget_router.post("/", response_model=Budget)
-def create_budget(budget: BudgetCreate, db: Session = Depends(get_db), user_id: int = 1):
+async def create_budget(budget: BudgetCreate, db: AsyncSession = Depends(get_db), user_id: int = 1):
     try:
-        return BudgetRepository.create_budget(db, budget, user_id)
+        return await BudgetRepository.create_budget(db, budget, user_id)
     except BudgetCreationError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except BudgetUserNotFoundError as e:
@@ -23,25 +28,25 @@ def create_budget(budget: BudgetCreate, db: Session = Depends(get_db), user_id: 
 
 
 @budget_router.get("/{budget_id}", response_model=BudgetUsage)
-def get_budget(budget_id: int, db: Session = Depends(get_db)):
+async def get_budget(budget_id: int, db: AsyncSession = Depends(get_db)):
     try:
-        return BudgetRepository.get_budget(db, budget_id)
+        return await BudgetRepository.get_budget(db, budget_id)
     except BudgetNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
 @budget_router.get("/", response_model=list[BudgetUsage])
-def list_budgets_by_user(user_id: int, db: Session = Depends(get_db)):
+async def list_budgets_by_user(user_id: int, db: AsyncSession = Depends(get_db)):
     try:
-        return BudgetRepository.get_budgets_by_user(db, user_id)
+        return await BudgetRepository.get_budgets_by_user(db, user_id)
     except BudgetUserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
 @budget_router.put("/{budget_id}", response_model=Budget)
-def update_budget(budget_id: int, budget_update: BudgetUpdate, db: Session = Depends(get_db)):
+async def update_budget(budget_id: int, budget_update: BudgetUpdate, db: AsyncSession = Depends(get_db)):
     try:
-        updated_budget = BudgetRepository.update_budget(db, budget_id, budget_update)
+        updated_budget = await BudgetRepository.update_budget(db, budget_id, budget_update)
         return updated_budget
     except BudgetNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -50,9 +55,9 @@ def update_budget(budget_id: int, budget_update: BudgetUpdate, db: Session = Dep
 
 
 @budget_router.delete("/{budget_id}")
-def delete_budget(budget_id: int, db: Session = Depends(get_db)):
+async def delete_budget(budget_id: int, db: AsyncSession = Depends(get_db)):
     try:
-        BudgetRepository.delete_budget(db, budget_id)
+        await BudgetRepository.delete_budget(db, budget_id)
         return {"message": "Budget deleted successfully"}
     except BudgetNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

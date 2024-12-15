@@ -17,7 +17,7 @@ class CategoryUpdate(BaseModel):
 
 
 class Category(BaseModel):
-    category_id: int
+    id: int
     name: str
     description: str
     user_id: int

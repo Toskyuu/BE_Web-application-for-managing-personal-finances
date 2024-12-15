@@ -33,7 +33,7 @@ class BudgetUpdate(BudgetBase):
 
 
 class BudgetUsage(BudgetBase):
-    budget_id: int
+    id: int
     user_id: int
     spent_in_budget: float
 

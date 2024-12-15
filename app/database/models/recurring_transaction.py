@@ -9,13 +9,13 @@ from app.database.models.enums import TransactionType, RecurringFrequency
 class RecurringTransaction(Base):
     __tablename__ = "recurring_transactions"
 
-    recurring_transaction_id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     amount = Column(Float, nullable=False)
     description = Column(String)
-    account_id = Column(Integer, ForeignKey("accounts.account_id"), nullable=False)
-    account_id_2 = Column(Integer, ForeignKey("accounts.account_id"))
-    category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    account_id_2 = Column(Integer, ForeignKey("accounts.id"))
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     type = Column(Enum(TransactionType), nullable=False)
     recurring_frequency = Column(Enum(RecurringFrequency), nullable=False)
     next_occurrence = Column(Date, nullable=False)

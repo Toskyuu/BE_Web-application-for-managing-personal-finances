@@ -1,11 +1,15 @@
 import re
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from fastapi_users import schemas
+from pydantic import BaseModel, EmailStr, field_validator
 
 
 class UserBase(BaseModel):
     email: EmailStr
-    password: str
+
+
+class UserCreate(schemas.BaseUserCreate):
+    username: str
 
     @field_validator("password")
     def validate_password(cls, value):
@@ -15,10 +19,6 @@ class UserBase(BaseModel):
                 "Password must be at least 8 characters long, include a lowercase letter, an uppercase letter, a digit, and a special character.")
         return value
 
-
-class UserCreate(UserBase):
-    username: str
-
     @field_validator("username")
     def validate_username(cls, value):
         if not (3 <= len(value) <= 30):
@@ -26,21 +26,26 @@ class UserCreate(UserBase):
         return value
 
 
-class UserLogin(BaseModel):
-    password: str
-    email: EmailStr
+class UserRead(schemas.BaseUser[int]):
+    id: int
 
 
-class UserUpdatePassword(UserBase):
-    old_password: str
+class UserUpdate(schemas.BaseUserUpdate):
+
+    @field_validator("password")
+    def validate_new_password(cls, value):
+        password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$"
+        if not re.match(password_regex, value):
+            raise ValueError(
+                "New password must be at least 8 characters long, include a lowercase letter, an uppercase letter, a digit, and a special character.")
+        return value
 
 
-class User(BaseModel):
+class UserResponse(BaseModel):
     user_id: int
     username: str
     email: EmailStr
-    password: str
-    is_mail_verified: bool
+    is_verified: bool
 
     class Config:
         from_attributes = True

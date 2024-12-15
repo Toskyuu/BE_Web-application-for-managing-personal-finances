@@ -1,5 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from app.api.schemas.Account import AccountCreate, AccountUpdate
 from app.database.models.account import Account
@@ -10,46 +11,52 @@ from app.exceptions.account_exceptions import AccountCreationError, AccountNotFo
 
 class AccountRepository:
     @staticmethod
-    def get_account(db: Session, account_id: int):
-        account = db.query(Account).filter(
-            Account.account_id == account_id,
+    async def get_account(db: AsyncSession, account_id: int):
+        result = await db.execute(select(Account).filter(
+            Account.id == account_id,
             Account.deleted == False
-        ).first()
+        ))
+        account = result.scalars().first()
         if not account:
             raise AccountNotFoundError(account_id)
         return account
 
     @staticmethod
-    def get_accounts_by_user(db: Session, user_id: int):
-        user = db.query(User).filter(User.user_id == user_id).first()
+    async def get_accounts_by_user(db: AsyncSession, user_id: int):
+        result = await db.execute(select(User).filter(User.id == user_id))
+        user = result.scalars().first()
         if not user:
             raise AccountUserNotFoundError(user_id)
-        return db.query(Account).filter(
+
+        result = await db.execute(select(Account).filter(
             Account.user_id == user_id,
             Account.deleted == False
-        ).all()
+        ))
+        return result.scalars().all()
 
     @staticmethod
-    def create_account(db: Session, account: AccountCreate, user_id: int):
+    async def create_account(db: AsyncSession, account: AccountCreate, user_id: int):
         try:
-            user = db.query(User).filter(User.user_id == user_id).first()
+            result = await db.execute(select(User).filter(User.id == user_id))
+            user = result.scalars().first()
             if not user:
                 raise AccountUserNotFoundError(user_id)
 
             db_account = Account(**account.model_dump(), user_id=user_id)
             db.add(db_account)
-            db.commit()
-            db.refresh(db_account)
+            await db.commit()
+            await db.refresh(db_account)
             return db_account
         except SQLAlchemyError as e:
             raise AccountCreationError(str(e))
 
     @staticmethod
-    def update_account(
-            db: Session, account_id: int, account_update: AccountUpdate) -> Account:
+    async def update_account(
+            db: AsyncSession, account_id: int, account_update: AccountUpdate) -> Account:
         try:
-            with db.begin():
-                account = db.query(Account).filter(Account.account_id == account_id).first()
+            async with db.begin():
+                result = await db.execute(select(Account).filter(Account.id == account_id))
+                account = result.scalars().first()
                 if not account:
                     raise AccountNotFoundError(account_id)
 
@@ -62,16 +69,19 @@ class AccountRepository:
 
                 for key, value in updated_account.items():
                     setattr(account, key, value)
-            return db.query(Account).filter(Account.account_id == account_id).first()
+
+            result = await db.execute(select(Account).filter(Account.id == account_id))
+            return result.scalars().first()
 
         except SQLAlchemyError as e:
             raise AccountUpdateError(str(e))
 
     @staticmethod
-    def delete_account(db: Session, account_id: int) -> bool:
+    async def delete_account(db: AsyncSession, account_id: int) -> bool:
         try:
-            with db.begin():
-                account = db.query(Account).filter(Account.account_id == account_id).first()
+            async with db.begin():
+                result = await db.execute(select(Account).filter(Account.id == account_id))
+                account = result.scalars().first()
                 if not account:
                     raise AccountNotFoundError(account_id=account_id)
 

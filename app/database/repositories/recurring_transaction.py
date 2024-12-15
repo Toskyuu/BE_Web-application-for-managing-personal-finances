@@ -1,5 +1,6 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
 from app.api.schemas.RecurringTransaction import RecurringTransactionCreate, RecurringTransactionUpdate
 from app.database.models.account import Account
@@ -16,38 +17,46 @@ from app.exceptions.recurring_transaction_exceptions import RecurringTransaction
 
 class RecurringTransactionRepository:
     @staticmethod
-    def get_recurring_transaction(db: Session, recurring_transaction_id: int):
-        recurring_transaction = db.query(RecurringTransaction).filter(
-            RecurringTransaction.recurring_transaction_id == recurring_transaction_id).first()
+    async def get_recurring_transaction(db: AsyncSession, recurring_transaction_id: int):
+        result = await db.execute(select(RecurringTransaction).filter(
+            RecurringTransaction.id == recurring_transaction_id))
+        recurring_transaction = result.scalar_one_or_none()
         if not recurring_transaction:
             raise RecurringTransactionNotFoundError(recurring_transaction_id)
         return recurring_transaction
 
     @staticmethod
-    def get_recurring_transactions_by_user(db: Session, user_id: int):
-        user = db.query(User).filter(User.user_id == user_id).first()
+    async def get_recurring_transactions_by_user(db: AsyncSession, user_id: int):
+        user = await db.execute(select(User).filter(User.id == user_id))
+        user = user.scalar_one_or_none()
         if not user:
             raise RecurringTransactionUserNotFoundError(user_id)
-        return db.query(RecurringTransaction).filter(RecurringTransaction.user_id == user_id).all()
+        result = await db.execute(select(RecurringTransaction).filter(RecurringTransaction.user_id == user_id))
+        return result.scalars().all()
 
     @staticmethod
-    def get_recurring_transactions_by_account(db: Session, account_id: int):
-        account = db.query(Account).filter(Account.account_id == account_id).first()
+    async def get_recurring_transactions_by_account(db: AsyncSession, account_id: int):
+        account = await db.execute(select(Account).filter(Account.id == account_id))
+        account = account.scalar_one_or_none()
         if not account:
             raise RecurringTransactionAccountNotFoundError(account_id)
-        return db.query(RecurringTransaction).filter(
-            (RecurringTransaction.account_id == account_id) | (RecurringTransaction.account_id_2 == account_id)
-        ).all()
+        result = await db.execute(select(RecurringTransaction).filter(
+            (RecurringTransaction.account_id == account_id) | (RecurringTransaction.account_id_2 == account_id)))
+        return result.scalars().all()
 
     @staticmethod
-    def create_recurring_transaction(db: Session, recurring_transaction: RecurringTransactionCreate, user_id: int):
+    async def create_recurring_transaction(db: AsyncSession, recurring_transaction: RecurringTransactionCreate, user_id: int):
         try:
-            with db.begin():
-                user = db.query(User).filter(User.user_id == user_id).first()
-                account_1 = db.query(Account).filter(
-                    Account.account_id == recurring_transaction.account_id).one_or_none()
-                category = db.query(Category).filter(
-                    Category.category_id == recurring_transaction.category_id).one_or_none()
+            async with db.begin():
+                user = await db.execute(select(User).filter(User.id == user_id))
+                user = user.scalar_one_or_none()
+                account_1 = await db.execute(select(Account).filter(
+                    Account.id == recurring_transaction.account_id))
+                account_1 = account_1.scalar_one_or_none()
+                category = await db.execute(select(Category).filter(
+                    Category.id == recurring_transaction.category_id))
+                category = category.scalar_one_or_none()
+
                 if not account_1:
                     raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
 
@@ -58,18 +67,19 @@ class RecurringTransactionRepository:
                     raise RecurringTransactionCategoryNotFoundError(recurring_transaction.category_id)
 
                 if recurring_transaction.type == TransactionType.INTERNAL:
-                    account_2 = db.query(Account).filter(
-                        Account.account_id == recurring_transaction.account_id_2).one_or_none()
+                    account_2 = await db.execute(select(Account).filter(
+                        Account.id == recurring_transaction.account_id_2))
+                    account_2 = account_2.scalar_one_or_none()
                     if not account_2:
                         raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id_2)
 
-                new_transaction = RecurringTransaction(**recurring_transaction.model_dump(), user_id=user.user_id)
+                new_transaction = RecurringTransaction(**recurring_transaction.model_dump(), user_id=user.id)
 
                 if not new_transaction.next_occurrence:
                     next_occurrence = calculate_next_occurrence(recurring_transaction.recurring_frequency, recurring_transaction.start_date)
                     new_transaction.next_occurrence = next_occurrence
 
-                RecurringTransactionRepository.update_account_balance(db, new_transaction, recurring_transaction.amount)
+                await RecurringTransactionRepository.update_account_balance(db, new_transaction, recurring_transaction.amount)
                 db.add(new_transaction)
 
                 return new_transaction
@@ -78,28 +88,32 @@ class RecurringTransactionRepository:
             raise RecurringTransactionCreationError(str(e))
 
     @staticmethod
-    def update_transaction(db: Session, recurring_transaction_id: int,
-                           recurring_transaction_update: RecurringTransactionUpdate) -> RecurringTransaction:
+    async def update_transaction(db: AsyncSession, recurring_transaction_id: int,
+                                 recurring_transaction_update: RecurringTransactionUpdate) -> RecurringTransaction:
         try:
-            with db.begin():
-                recurring_transaction = db.query(RecurringTransaction).filter(
-                    RecurringTransaction.recurring_transaction_id == recurring_transaction_id).first()
+            async with db.begin():
+                recurring_transaction = await db.execute(select(RecurringTransaction).filter(
+                    RecurringTransaction.id == recurring_transaction_id))
+                recurring_transaction = recurring_transaction.scalar_one_or_none()
                 if not recurring_transaction:
                     raise RecurringTransactionNotFoundError(recurring_transaction_id)
 
                 if recurring_transaction_update.category_id:
-                    category = db.query(Category).filter(
-                        Category.category_id == recurring_transaction_update.category_id).first()
+                    category = await db.execute(select(Category).filter(
+                        Category.id == recurring_transaction_update.category_id))
+                    category = category.scalar_one_or_none()
                     if not category:
                         raise RecurringTransactionCategoryNotFoundError(recurring_transaction_update.category_id)
                 if recurring_transaction_update.account_id:
-                    account = db.query(Account).filter(
-                        Account.account_id == recurring_transaction_update.account_id).first()
+                    account = await db.execute(select(Account).filter(
+                        Account.id == recurring_transaction_update.account_id))
+                    account = account.scalar_one_or_none()
                     if not account:
                         raise RecurringTransactionAccountNotFoundError(recurring_transaction_update.account_id)
                 if recurring_transaction_update.account_id_2:
-                    account_2 = db.query(Account).filter(
-                        Account.account_id == recurring_transaction_update.account_id_2).first()
+                    account_2 = await db.execute(select(Account).filter(
+                        Account.id == recurring_transaction_update.account_id_2))
+                    account_2 = account_2.scalar_one_or_none()
                     if not account_2:
                         raise RecurringTransactionAccountNotFoundError(recurring_transaction_update.account_id_2)
 
@@ -110,36 +124,43 @@ class RecurringTransactionRepository:
                     setattr(recurring_transaction, key, value)
 
                 if any(key in ['recurring_frequency', 'start_date'] for key in updated_transaction):
-                    recurring_transaction.next_occurrence = calculate_next_occurrence(recurring_transaction)
+                    recurring_transaction.next_occurrence = calculate_next_occurrence(recurring_transaction.recurring_frequency, recurring_transaction.start_date)
 
                 if 'amount' in updated_transaction:
                     amount_difference = updated_transaction['amount'] - previous_amount
-                    RecurringTransactionRepository.update_account_balance(db, recurring_transaction, amount_difference)
+                    await RecurringTransactionRepository.update_account_balance(db, recurring_transaction, amount_difference)
 
-            return db.query(RecurringTransaction).filter(
-                RecurringTransaction.recurring_transaction_id == recurring_transaction_id).first()
+            result = await db.execute(select(RecurringTransaction).filter(
+                RecurringTransaction.id == recurring_transaction_id))
+            return result.scalar_one_or_none()
+
         except SQLAlchemyError as e:
             raise RecurringTransactionUpdateError(str(e))
 
     @staticmethod
-    def update_account_balance(db: Session, recurring_transaction: RecurringTransaction, amount_difference: float):
+    async def update_account_balance(db: AsyncSession, recurring_transaction: RecurringTransaction, amount_difference: float):
         if recurring_transaction.type == TransactionType.INCOME:
-            account = db.query(Account).filter(Account.account_id == recurring_transaction.account_id).first()
+            account = await db.execute(select(Account).filter(Account.id == recurring_transaction.account_id))
+            account = account.scalar_one_or_none()
             if account:
                 account.balance += amount_difference
             else:
                 raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
 
         elif recurring_transaction.type == TransactionType.OUTCOME:
-            account = db.query(Account).filter(Account.account_id == recurring_transaction.account_id).first()
+            account = await db.execute(select(Account).filter(Account.id == recurring_transaction.account_id))
+            account = account.scalar_one_or_none()
             if account:
                 account.balance -= amount_difference
             else:
                 raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
 
         elif recurring_transaction.type == TransactionType.INTERNAL:
-            account_1 = db.query(Account).filter(Account.account_id == recurring_transaction.account_id).first()
-            account_2 = db.query(Account).filter(Account.account_id == recurring_transaction.account_id_2).first()
+            account_1 = await db.execute(select(Account).filter(Account.id == recurring_transaction.account_id))
+            account_1 = account_1.scalar_one_or_none()
+            account_2 = await db.execute(select(Account).filter(Account.id == recurring_transaction.account_id_2))
+            account_2 = account_2.scalar_one_or_none()
+
             if account_1 and account_2:
                 account_1.balance -= amount_difference
                 account_2.balance += amount_difference
@@ -149,17 +170,18 @@ class RecurringTransactionRepository:
                 raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id_2)
 
     @staticmethod
-    def delete_transaction(db: Session, recurring_transaction_id: int) -> bool:
+    async def delete_transaction(db: AsyncSession, recurring_transaction_id: int) -> bool:
         try:
-            with db.begin():
-                recurring_transaction = db.query(RecurringTransaction).filter(
-                    RecurringTransaction.recurring_transaction_id == recurring_transaction_id).first()
+            async with db.begin():
+                recurring_transaction = await db.execute(select(RecurringTransaction).filter(
+                    RecurringTransaction.id == recurring_transaction_id))
+                recurring_transaction = recurring_transaction.scalar_one_or_none()
                 if not recurring_transaction:
                     raise RecurringTransactionNotFoundError(recurring_transaction_id)
-                RecurringTransactionRepository.update_account_balance(db, recurring_transaction,
-                                                                      -recurring_transaction.amount)
+                await RecurringTransactionRepository.update_account_balance(db, recurring_transaction,
+                                                                           -recurring_transaction.amount)
 
-                db.delete(recurring_transaction)
+                await db.delete(recurring_transaction)
                 return True
         except SQLAlchemyError as e:
             raise RecurringTransactionDeleteError(str(e))
