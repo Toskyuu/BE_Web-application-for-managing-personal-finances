@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.database.postgres_utils import Base, get_db
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
 
@@ -10,7 +10,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
 
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username = Column(String, nullable=False)
 
 
