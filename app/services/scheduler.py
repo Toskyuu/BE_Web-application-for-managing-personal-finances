@@ -1,18 +1,17 @@
 from datetime import date
-
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from sqlalchemy.orm import Session
-
-from app.api.schemas.Transaction import TransactionCreate
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.models.recurring_transaction import RecurringTransaction
 from app.database.repositories.transaction import TransactionRepository
 from app.database.utils import calculate_next_occurrence
+from app.api.schemas.Transaction import TransactionCreate
 
 
 class RecurringTransactionScheduler:
-    def __init__(self, db_session: Session):
-        self.scheduler = BackgroundScheduler()
+    def __init__(self, db_session: AsyncSession):
+        self.scheduler = AsyncIOScheduler()
         self.db_session = db_session
 
     def start(self):
@@ -27,10 +26,13 @@ class RecurringTransactionScheduler:
     def stop(self):
         self.scheduler.shutdown()
 
-    def generate_recurring_transactions(self):
+    async def generate_recurring_transactions(self):
+        async with self.db_session.begin():
+            recurring_transactions = await self.db_session.execute(
+                select(RecurringTransaction)
+            )
+            recurring_transactions = recurring_transactions.scalars().all()
 
-        with self.db_session.begin():
-            recurring_transactions = self.db_session.query(RecurringTransaction).all()
             for recurring_transaction in recurring_transactions:
                 try:
                     while recurring_transaction.next_occurrence <= date.today():
@@ -44,10 +46,13 @@ class RecurringTransactionScheduler:
                             date=recurring_transaction.next_occurrence
                         )
 
-                        TransactionRepository.create_transaction_in_background(self.db_session ,new_transaction_data, recurring_transaction.user_id)
+                        await TransactionRepository.create_transaction_in_scheduler(
+                            self.db_session, new_transaction_data, recurring_transaction.user_id
+                        )
 
                         recurring_transaction.next_occurrence = calculate_next_occurrence(
-                            recurring_transaction.recurring_frequency, recurring_transaction.next_occurrence)
+                            recurring_transaction.recurring_frequency, recurring_transaction.next_occurrence
+                        )
 
                 except Exception as e:
-                    print(f"Failed to process transaction {recurring_transaction.recurring_transaction_id}: {e}")
+                    print(f"Failed to process transaction {recurring_transaction.id}: {e}")

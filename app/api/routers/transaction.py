@@ -5,7 +5,7 @@ from app.api.schemas.Transaction import TransactionUpdate, Transaction, Transact
 from app.database.repositories.transaction import TransactionRepository
 from app.exceptions.transaction_exceptions import TransactionUserNotFoundError, TransactionAccountNotFoundError, \
     TransactionNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
-    TransactionCategoryNotFoundError
+    TransactionCategoryNotFoundError, TransactionPageSizeError, TransactionPageError
 
 transaction_router = APIRouter(
     prefix="/transactions",
@@ -13,20 +13,27 @@ transaction_router = APIRouter(
 )
 
 @transaction_router.get("/", response_model=list[Transaction])
-async def list_transactions_by_user(user_id: int, db: AsyncSession = Depends(get_db)):
+async def list_transactions_by_user(user_id: int, page: int, size: int,  db: AsyncSession = Depends(get_db)):
     try:
-        return await TransactionRepository.get_transactions_by_user(db, user_id=user_id)
+        return await TransactionRepository.get_transactions_by_user(db, user_id=user_id, page=page, size=size)
     except TransactionUserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except TransactionPageSizeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except TransactionPageError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @transaction_router.get("/{account_id}/transactions", response_model=list[Transaction])
-async def list_transactions_by_account(account_id: int, db: AsyncSession = Depends(get_db)):
+async def list_transactions_by_account(account_id: int, page: int, size: int, db: AsyncSession = Depends(get_db)):
     try:
-        return await TransactionRepository.get_transactions_by_account(db, account_id=account_id)
+        return await TransactionRepository.get_transactions_by_account(db, account_id=account_id, page=page, size=size)
     except TransactionAccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
-
+    except TransactionPageSizeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except TransactionPageError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @transaction_router.get("/{transaction_id}", response_model=Transaction)
 async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db)):
