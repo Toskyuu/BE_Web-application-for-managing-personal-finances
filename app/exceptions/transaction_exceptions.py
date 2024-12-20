@@ -49,3 +49,11 @@ class TransactionPageError(TransactionError):
 class TransactionPageSizeError(TransactionError):
     def __init__(self):
         super().__init__("Size must be at least 1")
+
+class TransactionSortError(TransactionError):
+    def __init__(self):
+        super().__init__("Sort must be either ascending or descending")
+
+class TransactionSortColumnError(TransactionError):
+    def __init__(self):
+        super().__init__("You can only sort by date or amount")

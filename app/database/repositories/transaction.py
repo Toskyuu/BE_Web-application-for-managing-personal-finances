@@ -1,3 +1,4 @@
+from sqlalchemy import asc, desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -38,20 +39,32 @@ class TransactionRepository:
         return result.scalars().all()
 
     @staticmethod
-    async def get_transactions_by_account(db: AsyncSession, account_id: int, page: int, size: int):
-        if page <= 0:
-            raise TransactionPageError
-        if size <= 0:
-            raise TransactionPageSizeError
+    async def get_transactions_by_account(
+            db: AsyncSession,
+            account_id: int,
+            page: int,
+            size: int,
+            sort_by: str,
+            order: str
+    ):
         offset = (page - 1) * size
+        sort_order = asc if order == "asc" else desc
+
 
         result = await db.execute(select(Account).filter(Account.id == account_id))
         account = result.scalars().first()
         if not account:
             raise TransactionAccountNotFoundError(account_id)
-        result = await db.execute(select(Transaction).filter(
-            (Transaction.account_id == account_id) | (Transaction.account_id_2 == account_id)
-        ).offset(offset).limit(size))
+
+        result = await db.execute(
+            select(Transaction)
+            .filter(
+                (Transaction.account_id == account_id) | (Transaction.account_id_2 == account_id)
+            )
+            .order_by(sort_order(getattr(Transaction, sort_by)))
+            .offset(offset)
+            .limit(size)
+        )
         return result.scalars().all()
 
     @staticmethod
