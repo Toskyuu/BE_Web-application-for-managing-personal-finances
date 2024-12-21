@@ -32,7 +32,6 @@ class RecurringTransactionBase(BaseModel):
         return value
 
 
-
 class RecurringTransactionCreate(RecurringTransactionBase):
     category_id: int
     account_id: int
@@ -50,6 +49,37 @@ class RecurringTransactionUpdate(RecurringTransactionBase):
     account_id: Optional[int] = None
     account_id_2: Optional[int] = None
     type: Optional[TransactionType] = None
+
+
+class RecurringTransactionList(BaseModel):
+    page: Optional[int] = 1
+    size: Optional[int] = 10
+    sort_by: Optional[str] = "id"
+    order: Optional[str] = "asc"
+
+    @field_validator("page")
+    def validate_page(cls, value):
+        if value is not None and value <= 0:
+            raise ValueError("Page number must be greater than 0")
+        return value
+
+    @field_validator("size")
+    def validate_size(cls, value):
+        if value is not None and value <= 0:
+            raise ValueError("Size must be at least 1")
+        return value
+
+    @field_validator("order")
+    def validate_order(cls, value):
+        if value and value not in ["asc", "desc"]:
+            raise ValueError("Sort must be either asc or desc")
+        return value
+
+    @field_validator("sort_by")
+    def validate_sort_by(cls, value):
+        if value and value not in ["id", "amount", "start_date", "recurring_frequency"]:
+            raise ValueError("You can only sort by id, amount, start_date or recurring_frequency")
+        return value
 
 
 class RecurringTransaction(BaseModel):

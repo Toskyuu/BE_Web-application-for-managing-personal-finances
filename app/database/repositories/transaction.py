@@ -50,7 +50,6 @@ class TransactionRepository:
         offset = (page - 1) * size
         sort_order = asc if order == "asc" else desc
 
-
         result = await db.execute(select(Account).filter(Account.id == account_id))
         account = result.scalars().first()
         if not account:

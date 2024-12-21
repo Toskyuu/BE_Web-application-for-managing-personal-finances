@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.schemas.Account import Account, AccountCreate, AccountUpdate, AccountList
 from app.database.postgres_utils import get_db
-from app.api.schemas.Account import Account, AccountCreate, AccountUpdate
 from app.database.repositories.account import AccountRepository
 from app.exceptions.account_exceptions import (
     AccountNotFoundError,
@@ -17,10 +18,14 @@ account_router = APIRouter(
 )
 
 
-@account_router.get("/", response_model=list[Account])
-async def list_accounts(user_id: int, db: AsyncSession = Depends(get_db)):
+@account_router.post("/accounts", response_model=list[Account])
+async def list_accounts(
+        user_id: int,
+        account: AccountList,
+        db: AsyncSession = Depends(get_db)):
     try:
-        return await AccountRepository.get_accounts_by_user(db, user_id=user_id)
+        return await AccountRepository.get_accounts_by_user(db, user_id=user_id, page=account.page, size=account.size,
+                                                            sort_by=account.sort_by, order=account.order)
     except AccountUserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -45,9 +50,9 @@ async def create_account(account: AccountCreate, user_id: int, db: AsyncSession 
 
 @account_router.put("/{account_id}")
 async def update_account_initial_balance(
-    account_id: int,
-    account_update: AccountUpdate,
-    db: AsyncSession = Depends(get_db)
+        account_id: int,
+        account_update: AccountUpdate,
+        db: AsyncSession = Depends(get_db)
 ):
     try:
         updated_account = await AccountRepository.update_account(db, account_id, account_update)

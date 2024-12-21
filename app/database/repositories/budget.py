@@ -1,11 +1,12 @@
+from sqlalchemy import asc, desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage
 from app.database.models.budget import Budget as BudgetModel
-from app.database.utils import get_spent
 from app.database.models.user import User
+from app.database.utils import get_spent
 from app.exceptions.budget_exceptions import BudgetNotFoundError, BudgetUserNotFoundError, BudgetCreationError, \
     BudgetUpdateError, BudgetDeleteError
 
@@ -29,13 +30,29 @@ class BudgetRepository:
         )
 
     @staticmethod
-    async def get_budgets_by_user(db: AsyncSession, user_id: int) -> list[BudgetUsage]:
+    async def get_budgets_by_user(
+            db: AsyncSession,
+            user_id: int,
+            page: int,
+            size: int,
+            sort_by: str,
+            order: str
+    ) -> list[BudgetUsage]:
+        offset = (page - 1) * size
+        sort_order = asc if order == "asc" else desc
+
         user = await db.execute(select(User).filter(User.id == user_id))
         user = user.scalars().first()
         if not user:
             raise BudgetUserNotFoundError(user_id)
 
-        result = await db.execute(select(BudgetModel).filter(BudgetModel.user_id == user_id))
+        result = await db.execute(
+            select(BudgetModel)
+            .filter(BudgetModel.user_id == user_id)
+            .order_by(sort_order(getattr(BudgetModel, sort_by)))
+            .offset(offset)
+            .limit(size)
+        )
         budgets = result.scalars().all()
 
         return [

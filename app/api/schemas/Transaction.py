@@ -30,6 +30,7 @@ class TransactionCreate(TransactionBase):
     account_id_2: Optional[int] = None
     type: TransactionType
 
+
 class TransactionList(BaseModel):
     page: Optional[int] = 1
     size: Optional[int] = 10
