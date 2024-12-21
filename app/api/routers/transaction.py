@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.postgres_utils import get_db
-from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate
+from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate, TransactionList
 from app.database.repositories.transaction import TransactionRepository
 from app.exceptions.transaction_exceptions import TransactionUserNotFoundError, TransactionAccountNotFoundError, \
     TransactionNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
@@ -24,10 +24,16 @@ async def list_transactions_by_user(user_id: int, page: int, size: int,  db: Asy
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@transaction_router.get("/{account_id}/transactions", response_model=list[Transaction])
-async def list_transactions_by_account(account_id: int, page: int, size: int, db: AsyncSession = Depends(get_db)):
+@transaction_router.post("/{account_id}/transactions", response_model=list[Transaction])
+async def list_transactions_by_account(
+    account_id: int,
+    transaction: TransactionList,
+    db: AsyncSession = Depends(get_db)
+):
     try:
-        return await TransactionRepository.get_transactions_by_account(db, account_id=account_id, page=page, size=size)
+        return await TransactionRepository.get_transactions_by_account(
+            db, account_id=account_id, page=transaction.page, size=transaction.size, sort_by=transaction.sort_by, order=transaction.order
+        )
     except TransactionAccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except TransactionPageSizeError as e:

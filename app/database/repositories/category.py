@@ -1,3 +1,4 @@
+from sqlalchemy import asc, desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -22,16 +23,32 @@ class CategoryRepository:
         return category
 
     @staticmethod
-    async def get_categories_by_user(db: AsyncSession, user_id: int):
+    async def get_categories_by_user(
+            db: AsyncSession,
+            user_id: int,
+            page: int,
+            size: int,
+            sort_by: str,
+            order: str
+    ):
+        offset = (page - 1) * size
+        sort_order = asc if order == "asc" else desc
+
         result = await db.execute(select(User).filter(User.id == user_id))
         user = result.scalars().first()
         if not user:
             raise CategoryUserNotFoundError(user_id)
 
-        result = await db.execute(select(Category).filter(
+        result = await db.execute(
+            select(Category).
+            filter(
             Category.user_id == user_id,
             Category.deleted == False
-        ))
+        )
+            .order_by(sort_order(getattr(Category, sort_by)))
+            .offset(offset)
+            .limit(size)
+        )
         return result.scalars().all()
 
     @staticmethod

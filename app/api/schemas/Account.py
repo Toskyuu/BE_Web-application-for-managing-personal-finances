@@ -1,5 +1,7 @@
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel, field_validator
+
 from app.database.models.enums import AccountType
 
 
@@ -17,6 +19,37 @@ class AccountUpdate(BaseModel):
     name: Optional[str] = None
     initial_balance: Optional[float] = None
     type: Optional[AccountType] = None
+
+
+class AccountList(BaseModel):
+    page: Optional[int] = 1
+    size: Optional[int] = 10
+    sort_by: Optional[str] = "id"
+    order: Optional[str] = "asc"
+
+    @field_validator("page")
+    def validate_page(cls, value):
+        if value is not None and value <= 0:
+            raise ValueError("Page number must be greater than 0")
+        return value
+
+    @field_validator("size")
+    def validate_size(cls, value):
+        if value is not None and value <= 0:
+            raise ValueError("Size must be at least 1")
+        return value
+
+    @field_validator("order")
+    def validate_order(cls, value):
+        if value and value not in ["asc", "desc"]:
+            raise ValueError("Sort must be either asc or desc")
+        return value
+
+    @field_validator("sort_by")
+    def validate_sort_by(cls, value):
+        if value and value not in ["id", "balance", "initial_balance", "type"]:
+            raise ValueError("You can only sort by id, balance, initial balance or type")
+        return value
 
 
 class Account(BaseModel):

@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.postgres_utils import get_db
-from app.api.schemas.RecurringTransaction import RecurringTransactionUpdate, RecurringTransaction, RecurringTransactionCreate
+from app.api.schemas.RecurringTransaction import RecurringTransactionUpdate, RecurringTransaction, \
+    RecurringTransactionCreate, RecurringTransactionList
 from app.database.repositories.recurring_transaction import RecurringTransactionRepository
 from app.exceptions.recurring_transaction_exceptions import RecurringTransactionUserNotFoundError, RecurringTransactionAccountNotFoundError, \
     RecurringTransactionNotFoundError, RecurringTransactionCreationError, RecurringTransactionUpdateError, RecurringTransactionDeleteError, \
@@ -19,10 +20,14 @@ async def list_recurring_transactions_by_user(user_id: int, db: AsyncSession = D
     except RecurringTransactionUserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@recurring_transaction_router.get("/{account_id}/recurring-transactions", response_model=list[RecurringTransaction])
-async def list_recurring_transactions_by_account(account_id: int, db: AsyncSession = Depends(get_db)):
+@recurring_transaction_router.post("/{account_id}/recurring-transactions", response_model=list[RecurringTransaction])
+async def list_recurring_transactions_by_account(
+        account_id: int,
+        recurring_transaction: RecurringTransactionList,
+        db: AsyncSession = Depends(get_db)):
     try:
-        return await RecurringTransactionRepository.get_recurring_transactions_by_account(db, account_id=account_id)
+        return await RecurringTransactionRepository.get_recurring_transactions_by_account(
+            db, account_id=account_id, page=recurring_transaction.page, size=recurring_transaction.page, sort_by=recurring_transaction.sort_by, order=recurring_transaction.order)
     except RecurringTransactionAccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

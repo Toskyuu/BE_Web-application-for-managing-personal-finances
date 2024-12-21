@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.postgres_utils import get_db
-from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage
+from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage, BudgetList
 from app.database.repositories.budget import BudgetRepository
 from app.exceptions.budget_exceptions import (
     BudgetUserNotFoundError,
@@ -35,10 +35,14 @@ async def get_budget(budget_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@budget_router.get("/", response_model=list[BudgetUsage])
-async def list_budgets_by_user(user_id: int, db: AsyncSession = Depends(get_db)):
+@budget_router.post("/budgets", response_model=list[BudgetUsage])
+async def list_budgets_by_user(
+        user_id: int,
+        budget: BudgetList,
+        db: AsyncSession = Depends(get_db)):
     try:
-        return await BudgetRepository.get_budgets_by_user(db, user_id)
+        return await BudgetRepository.get_budgets_by_user(
+            db, user_id=user_id, page=budget.page, size=budget.size, sort_by=budget.sort_by, order=budget.order)
     except BudgetUserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

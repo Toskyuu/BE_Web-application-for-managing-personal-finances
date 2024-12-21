@@ -17,7 +17,7 @@ class RecurringTransactionScheduler:
     def start(self):
         self.scheduler.add_job(
             self.generate_recurring_transactions,
-            IntervalTrigger(seconds=5),
+            IntervalTrigger(hours=24),
             id="generate_recurring_transactions",
             max_instances=1
         )
