@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database.postgres_utils import get_db
+
 from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate, TransactionList
+from app.api.schemas.TransactionFilter import TransactionFilter
+from app.database.postgres_utils import get_db
 from app.database.repositories.transaction import TransactionRepository
 from app.exceptions.transaction_exceptions import TransactionUserNotFoundError, TransactionAccountNotFoundError, \
     TransactionNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
@@ -12,27 +15,17 @@ transaction_router = APIRouter(
     tags=["Transactions"]
 )
 
-@transaction_router.get("/", response_model=list[Transaction])
-async def list_transactions_by_user(user_id: int, page: int, size: int,  db: AsyncSession = Depends(get_db)):
-    try:
-        return await TransactionRepository.get_transactions_by_user(db, user_id=user_id, page=page, size=size)
-    except TransactionUserNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except TransactionPageSizeError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except TransactionPageError as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
 @transaction_router.post("/{account_id}/transactions", response_model=list[Transaction])
-async def list_transactions_by_account(
-    account_id: int,
-    transaction: TransactionList,
-    db: AsyncSession = Depends(get_db)
+async def list_transactions(
+        transaction: TransactionList,
+        filters: TransactionFilter = FilterDepends(TransactionFilter),
+        db: AsyncSession = Depends(get_db)
 ):
     try:
-        return await TransactionRepository.get_transactions_by_account(
-            db, account_id=account_id, page=transaction.page, size=transaction.size, sort_by=transaction.sort_by, order=transaction.order
+        return await TransactionRepository.list_transactions(
+            db, transaction, filters
         )
     except TransactionAccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -40,6 +33,11 @@ async def list_transactions_by_account(
         raise HTTPException(status_code=400, detail=str(e))
     except TransactionPageError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except TransactionUserNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except TransactionCategoryNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 
 @transaction_router.get("/{transaction_id}", response_model=Transaction)
 async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db)):
@@ -64,7 +62,8 @@ async def create_transaction(transaction: TransactionCreate, user_id: int, db: A
 
 
 @transaction_router.put("/{transaction_id}")
-async def update_transaction(transaction_id: int, transaction_update: TransactionUpdate, db: AsyncSession = Depends(get_db)):
+async def update_transaction(transaction_id: int, transaction_update: TransactionUpdate,
+                             db: AsyncSession = Depends(get_db)):
     try:
         updated_transaction = await TransactionRepository.update_transaction(db, transaction_id, transaction_update)
         return updated_transaction

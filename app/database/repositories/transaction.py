@@ -1,9 +1,10 @@
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate
+from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate, TransactionList
+from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.models.account import Account
 from app.database.models.category import Category
 from app.database.models.enums import TransactionType
@@ -11,7 +12,7 @@ from app.database.models.transaction import Transaction
 from app.database.models.user import User
 from app.exceptions.transaction_exceptions import TransactionNotFoundError, TransactionUserNotFoundError, \
     TransactionAccountNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
-    TransactionCategoryNotFoundError, TransactionPageError, TransactionPageSizeError
+    TransactionCategoryNotFoundError
 
 
 class TransactionRepository:
@@ -24,46 +25,60 @@ class TransactionRepository:
         return transaction
 
     @staticmethod
-    async def get_transactions_by_user(db: AsyncSession, user_id: int, page: int, size: int):
-        if page <= 0:
-            raise TransactionPageError
-        if size <= 0:
-            raise TransactionPageSizeError
-        offset = (page - 1) * size
-
-        result = await db.execute(select(User).filter(User.id == user_id))
-        user = result.scalars().first()
-        if not user:
-            raise TransactionUserNotFoundError(user_id)
-        result = await db.execute(select(Transaction).filter(Transaction.user_id == user_id).offset(offset).limit(size))
-        return result.scalars().all()
-
-    @staticmethod
-    async def get_transactions_by_account(
+    async def list_transactions(
             db: AsyncSession,
-            account_id: int,
-            page: int,
-            size: int,
-            sort_by: str,
-            order: str
+            transaction: TransactionList,
+            filters: TransactionFilter,
+
     ):
-        offset = (page - 1) * size
-        sort_order = asc if order == "asc" else desc
+        offset = (transaction.page - 1) * transaction.size
+        sort_order = asc if transaction.order == "asc" else desc
 
-        result = await db.execute(select(Account).filter(Account.id == account_id))
-        account = result.scalars().first()
-        if not account:
-            raise TransactionAccountNotFoundError(account_id)
+        if filters.account_id is not None:
+            result = await db.execute(select(Account).filter(Account.id == filters.account_id))
+            account = result.scalars().first()
+            if not account:
+                raise TransactionAccountNotFoundError(filters.account_id)
 
-        result = await db.execute(
+        if filters.user_id is not None:
+            result = await db.execute(select(User).filter(User.id == filters.user_id))
+            user = result.scalars().first()
+            if not user:
+                raise TransactionUserNotFoundError(filters.user_id)
+
+        if filters.category_id is not None:
+            result = await db.execute(select(Category).filter(Category.id == filters.category_id))
+            category = result.scalars().first()
+            if not category:
+                raise TransactionCategoryNotFoundError(filters.category_id)
+
+        conditions = []
+        if filters.account_id:
+            conditions.append(Transaction.account_id == filters.account_id)
+        if filters.user_id:
+            conditions.append(Transaction.user_id == filters.user_id)
+        if filters.category_id:
+            conditions.append(Transaction.category_id == filters.category_id)
+        if filters.min_amount:
+            conditions.append(Transaction.amount >= filters.min_amount)
+        if filters.max_amount:
+            conditions.append(Transaction.amount <= filters.max_amount)
+        if filters.date_from:
+            conditions.append(Transaction.date >= filters.date_from)
+        if filters.date_to:
+            conditions.append(Transaction.date <= filters.date_to)
+        if filters.type:
+            conditions.append(Transaction.type == filters.type)
+
+        query = (
             select(Transaction)
-            .filter(
-                (Transaction.account_id == account_id) | (Transaction.account_id_2 == account_id)
-            )
-            .order_by(sort_order(getattr(Transaction, sort_by)))
+            .filter(and_(*conditions))
+            .order_by(sort_order(getattr(Transaction, transaction.sort_by)))
             .offset(offset)
-            .limit(size)
+            .limit(transaction.size)
         )
+
+        result = await db.execute(query)
         return result.scalars().all()
 
     @staticmethod
