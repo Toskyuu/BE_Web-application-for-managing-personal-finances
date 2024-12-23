@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate
+from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate, TransactionResponse
 from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.postgres_utils import get_db
 from app.database.repositories.transaction import TransactionRepository
@@ -45,7 +45,7 @@ async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@transaction_router.post("/", response_model=Transaction)
+@transaction_router.post("/", response_model=TransactionResponse)
 async def create_transaction(transaction: TransactionCreate, user_id: int, db: AsyncSession = Depends(get_db)):
     try:
         return await TransactionRepository.create_transaction(db, transaction, user_id)
