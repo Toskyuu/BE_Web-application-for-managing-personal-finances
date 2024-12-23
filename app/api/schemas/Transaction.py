@@ -31,37 +31,6 @@ class TransactionCreate(TransactionBase):
     type: TransactionType
 
 
-class TransactionList(BaseModel):
-    page: Optional[int] = 1
-    size: Optional[int] = 10
-    sort_by: Optional[str] = "date"
-    order: Optional[str] = "asc"
-
-    @field_validator("page")
-    def validate_page(cls, value):
-        if value is not None and value <= 0:
-            raise ValueError("Page number must be greater than 0")
-        return value
-
-    @field_validator("size")
-    def validate_size(cls, value):
-        if value is not None and value <= 0:
-            raise ValueError("Size must be at least 1")
-        return value
-
-    @field_validator("order")
-    def validate_order(cls, value):
-        if value and value not in ["asc", "desc"]:
-            raise ValueError("Sort must be either ascending or descending")
-        return value
-
-    @field_validator("sort_by")
-    def validate_sort_by(cls, value):
-        if value and value not in ["date", "amount"]:
-            raise ValueError("You can only sort by date or amount")
-        return value
-
-
 class TransactionUpdate(TransactionBase):
     description: Optional[str] = None
     amount: Optional[float] = None

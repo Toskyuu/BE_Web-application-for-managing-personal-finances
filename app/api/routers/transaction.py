@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate, TransactionList
+from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate
 from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.postgres_utils import get_db
 from app.database.repositories.transaction import TransactionRepository
@@ -16,16 +16,14 @@ transaction_router = APIRouter(
 )
 
 
-
 @transaction_router.post("/{account_id}/transactions", response_model=list[Transaction])
 async def list_transactions(
-        transaction: TransactionList,
         filters: TransactionFilter = FilterDepends(TransactionFilter),
         db: AsyncSession = Depends(get_db)
 ):
     try:
         return await TransactionRepository.list_transactions(
-            db, transaction, filters
+            db, filters
         )
     except TransactionAccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate, TransactionList
+from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate
 from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.models.account import Account
 from app.database.models.category import Category
@@ -27,12 +27,11 @@ class TransactionRepository:
     @staticmethod
     async def list_transactions(
             db: AsyncSession,
-            transaction: TransactionList,
-            filters: TransactionFilter,
+            filters: TransactionFilter
 
     ):
-        offset = (transaction.page - 1) * transaction.size
-        sort_order = asc if transaction.order == "asc" else desc
+        offset = (filters.page - 1) * filters.size
+        sort_order = asc if filters.order == "asc" else desc
 
         if filters.account_id is not None:
             result = await db.execute(select(Account).filter(Account.id == filters.account_id))
@@ -73,9 +72,9 @@ class TransactionRepository:
         query = (
             select(Transaction)
             .filter(and_(*conditions))
-            .order_by(sort_order(getattr(Transaction, transaction.sort_by)))
+            .order_by(sort_order(getattr(Transaction, filters.sort_by)))
             .offset(offset)
-            .limit(transaction.size)
+            .limit(filters.size)
         )
 
         result = await db.execute(query)
