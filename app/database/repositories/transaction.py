@@ -7,7 +7,7 @@ from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate
 from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.models.account import Account
 from app.database.models.category import Category
-from app.database.models.enums import TransactionType
+from app.database.models.enums import TransactionType, RecurringFrequency
 from app.database.models.transaction import Transaction
 from app.database.models.user import User
 from app.exceptions.transaction_exceptions import TransactionNotFoundError, TransactionUserNotFoundError, \
@@ -156,7 +156,16 @@ class TransactionRepository:
                 await TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
                 db.add(new_transaction)
 
-                return new_transaction
+                recurring_frequency = await TransactionRepository.detect_recurring_transactions(
+                    db=db,
+                    transaction=new_transaction,
+                    user_id=user.id
+                )
+
+                if recurring_frequency:
+                    return {"transaction": new_transaction, "recurring_frequency": recurring_frequency}
+
+                return {"transaction": new_transaction, "recurring_frequency": None}
 
         except SQLAlchemyError as e:
             raise TransactionCreationError(str(e))
@@ -243,3 +252,44 @@ class TransactionRepository:
 
         except SQLAlchemyError as e:
             raise TransactionCreationError(str(e))
+
+    @staticmethod
+    async def detect_recurring_transactions(db: AsyncSession, transaction: Transaction, user_id: int):
+        tolerance_days = 3
+        cycle_map = {
+            1: RecurringFrequency.DAILY,
+            7: RecurringFrequency.WEEKLY,
+            14: RecurringFrequency.BIWEEKLY,
+            30: RecurringFrequency.MONTHLY
+        }
+
+        past_transactions = await db.execute(
+            select(Transaction)
+            .filter(
+                Transaction.user_id == user_id,
+                Transaction.category_id == transaction.category_id,
+                Transaction.account_id == transaction.account_id,
+                Transaction.type == transaction.type,
+                Transaction.amount == transaction.amount,
+                Transaction.date <= transaction.date
+            )
+        )
+        past_transactions = past_transactions.scalars().all()
+
+        if len(past_transactions) < 3:
+            return None
+
+        date_diffs = []
+        for i in range(1, len(past_transactions)):
+            diff = (past_transactions[i].date - past_transactions[i - 1].date).days
+            date_diffs.append(diff)
+
+        for cycle, frequency in cycle_map.items():
+            matches_cycle = all(
+                abs(diff - cycle) <= tolerance_days for diff in date_diffs[-3:]
+            )
+            if matches_cycle:
+                return frequency
+        return None
+
+

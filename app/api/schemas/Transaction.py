@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, field_validator
 
-from app.database.models.enums import TransactionType
+from app.database.models.enums import TransactionType, RecurringFrequency
 
 
 class TransactionBase(BaseModel):
@@ -53,3 +53,8 @@ class Transaction(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TransactionResponse(BaseModel):
+    transaction: Transaction
+    recurring_frequency: Optional[RecurringFrequency]
+
