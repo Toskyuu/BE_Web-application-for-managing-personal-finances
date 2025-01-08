@@ -16,7 +16,7 @@ transaction_router = APIRouter(
 )
 
 
-@transaction_router.post("/{account_id}/transactions", response_model=list[Transaction])
+@transaction_router.post("/transactions", response_model=list[Transaction])
 async def list_transactions(
         filters: TransactionFilter = FilterDepends(TransactionFilter),
         db: AsyncSession = Depends(get_db)

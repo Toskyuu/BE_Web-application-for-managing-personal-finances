@@ -54,6 +54,7 @@ class AccountList(BaseModel):
 
 class Account(BaseModel):
     id: int
+    name: str
     user_id: int
     balance: Optional[float] = None
     type: AccountType
