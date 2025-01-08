@@ -15,11 +15,13 @@ class BudgetCreationError(BudgetError):
     def __init__(self, message: str):
         super().__init__(f"Failed to create budget: {message}")
 
+class BudgetCategoryNotFoundError(BudgetError):
+    def __init__(self, category_id: int):
+        super().__init__(f"Category with ID {category_id} not found.")
 
 class BudgetUpdateError(BudgetError):
     def __init__(self, message: str):
         super().__init__(f"Failed to update budget: {message}")
-
 
 class BudgetDeleteError(BudgetError):
     def __init__(self, message: str):
