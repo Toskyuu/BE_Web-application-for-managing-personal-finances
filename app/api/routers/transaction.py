@@ -37,7 +37,7 @@ async def list_transactions(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@transaction_router.get("/{transaction_id}", response_model=Transaction)
+@transaction_router.post("/{transaction_id}", response_model=Transaction)
 async def get_transaction(transaction_id: int, db: AsyncSession = Depends(get_db)):
     try:
         return await TransactionRepository.get_transaction(db, transaction_id=transaction_id)

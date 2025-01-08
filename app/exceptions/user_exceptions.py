@@ -7,6 +7,10 @@ class UserNotFoundError(UserError):
         self.user_id = user_id
         super().__init__(f"User with ID {user_id} not found.")
 
+class UnauthorizedError(UserError):
+    def __init__(self):
+        super().__init__("Unauthorized access.")
+
 
 class UserEmailNotFoundError(UserError):
     def __init__(self, email: str):
