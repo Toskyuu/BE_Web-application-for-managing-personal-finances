@@ -74,7 +74,6 @@ class Budget(BaseModel):
     limit: int
     month_year: date
     category_id: int
-    budget_id: int
     user_id: int
     spent_in_budget: Optional[float] = None
 

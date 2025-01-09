@@ -9,7 +9,6 @@ from app.database.models.transaction import Transaction
 
 
 class TransactionFilter(Filter):
-    user_id: Optional[int] = None
     account_id: Optional[int] = None
     category_id: Optional[int] = None
     min_amount: Optional[float] = None

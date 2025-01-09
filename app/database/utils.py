@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas.Transaction import Transaction
+from app.database.models.transaction import Transaction
 from app.database.models.budget import Budget
 from app.database.models.enums import RecurringFrequency
 from app.database.models.enums import TransactionType

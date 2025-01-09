@@ -13,22 +13,25 @@ from app.database.models.user import User
 from app.exceptions.transaction_exceptions import TransactionNotFoundError, TransactionUserNotFoundError, \
     TransactionAccountNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
     TransactionCategoryNotFoundError
+from app.exceptions.user_exceptions import UnauthorizedError
 
 
 class TransactionRepository:
     @staticmethod
-    async def get_transaction(db: AsyncSession, transaction_id: int):
+    async def get_transaction(db: AsyncSession, transaction_id: int, user_id: int) -> Transaction:
         result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
         transaction = result.scalars().first()
         if not transaction:
             raise TransactionNotFoundError(transaction_id)
+        if transaction.user_id != user_id:
+            raise UnauthorizedError
         return transaction
 
     @staticmethod
     async def list_transactions(
             db: AsyncSession,
-            filters: TransactionFilter
-
+            filters: TransactionFilter,
+            user_id: int
     ):
         offset = (filters.page - 1) * filters.size
         sort_order = asc if filters.order == "asc" else desc
@@ -38,24 +41,20 @@ class TransactionRepository:
             account = result.scalars().first()
             if not account:
                 raise TransactionAccountNotFoundError(filters.account_id)
-
-        if filters.user_id is not None:
-            result = await db.execute(select(User).filter(User.id == filters.user_id))
-            user = result.scalars().first()
-            if not user:
-                raise TransactionUserNotFoundError(filters.user_id)
+            if account.user_id != user_id:
+                raise UnauthorizedError
 
         if filters.category_id is not None:
             result = await db.execute(select(Category).filter(Category.id == filters.category_id))
             category = result.scalars().first()
             if not category:
                 raise TransactionCategoryNotFoundError(filters.category_id)
+            if category.user_id != user_id:
+                raise UnauthorizedError
 
-        conditions = []
+        conditions = [Transaction.user_id == user_id]
         if filters.account_id:
             conditions.append(Transaction.account_id == filters.account_id)
-        if filters.user_id:
-            conditions.append(Transaction.user_id == filters.user_id)
         if filters.category_id:
             conditions.append(Transaction.category_id == filters.category_id)
         if filters.min_amount:
@@ -81,91 +80,109 @@ class TransactionRepository:
         return result.scalars().all()
 
     @staticmethod
-    async def update_transaction(db: AsyncSession, transaction_id: int,
-                                 transaction_update: TransactionUpdate) -> Transaction:
+    async def update_transaction(db: AsyncSession,
+                                 transaction_id: int,
+                                 transaction_update: TransactionUpdate,
+                                 user_id: int) -> Transaction:
         try:
-            async with db.begin():
-                result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
-                transaction = result.scalars().first()
-                if not transaction:
-                    raise TransactionNotFoundError(transaction_id)
+            result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
+            transaction = result.scalars().first()
+            if transaction is None:
+                raise TransactionNotFoundError(transaction_id)
+            if transaction.user_id != user_id:
+                raise UnauthorizedError
 
-                if transaction_update.category_id:
-                    category_result = await db.execute(
-                        select(Category).filter(Category.id == transaction_update.category_id))
-                    category = category_result.scalars().first()
-                    if not category:
-                        raise TransactionCategoryNotFoundError(transaction_update.category_id)
+            if transaction_update.category_id is not None:
+                category_result = await db.execute(
+                    select(Category).filter(Category.id == transaction_update.category_id))
+                category = category_result.scalars().first()
+                if category is None:
+                    raise TransactionCategoryNotFoundError(transaction_update.category_id)
+                if category.deleted is True:
+                    raise TransactionCategoryNotFoundError(transaction_update.category_id)
+                if category.user_id != user_id:
+                    raise UnauthorizedError
 
-                if transaction_update.account_id:
-                    account_result = await db.execute(
-                        select(Account).filter(Account.id == transaction_update.account_id))
-                    account = account_result.scalars().first()
-                    if not account:
-                        raise TransactionAccountNotFoundError(transaction_update.account_id)
 
-                if transaction_update.account_id_2:
-                    account_2_result = await db.execute(
-                        select(Account).filter(Account.id == transaction_update.account_id_2))
-                    account_2 = account_2_result.scalars().first()
-                    if not account_2:
-                        raise TransactionAccountNotFoundError(transaction_update.account_id_2)
+            if transaction_update.account_id is not None:
+                account_result = await db.execute(
+                    select(Account).filter(Account.id == transaction_update.account_id))
+                account = account_result.scalars().first()
+                if account is None:
+                    raise TransactionAccountNotFoundError(transaction_update.account_id)
+                if account.user_id != user_id:
+                    raise UnauthorizedError
 
-                previous_amount = transaction.amount
-                updated_transaction = transaction_update.model_dump(exclude_unset=True)
+            if transaction_update.type == TransactionType.INTERNAL:
+                account_2_result = await db.execute(
+                    select(Account).filter(Account.id == transaction_update.account_id_2))
+                account_2 = account_2_result.scalars().first()
+                if account_2 is None:
+                    raise TransactionAccountNotFoundError(transaction_update.account_id_2)
+                if account_2.user_id != user_id:
+                    raise UnauthorizedError
+            else:
+                transaction_update.account_id_2 = None
 
-                for key, value in updated_transaction.items():
-                    setattr(transaction, key, value)
+            previous_amount = transaction.amount
+            updated_transaction = transaction_update.model_dump(exclude_unset=True)
 
-                if 'amount' in updated_transaction:
-                    amount_difference = updated_transaction['amount'] - previous_amount
-                    await TransactionRepository.update_account_balance(db, transaction, amount_difference)
+            for key, value in updated_transaction.items():
+                setattr(transaction, key, value)
+
+            if 'amount' in updated_transaction:
+                amount_difference = updated_transaction['amount'] - previous_amount
+                await TransactionRepository.update_account_balance(db, transaction, amount_difference)
 
             result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
             return result.scalars().first()
+
         except SQLAlchemyError as e:
             raise TransactionUpdateError(str(e))
 
     @staticmethod
     async def create_transaction(db: AsyncSession, transaction: TransactionCreate, user_id: int):
         try:
-            async with db.begin():
-                result = await db.execute(select(User).filter(User.id == user_id))
-                user = result.scalars().first()
-                if not user:
-                    raise TransactionUserNotFoundError(user_id)
+            account_1_result = await db.execute(select(Account).filter(Account.id == transaction.account_id))
+            account_1 = account_1_result.scalars().first()
+            if not account_1:
+                raise TransactionAccountNotFoundError(transaction.account_id)
+            if account_1.user_id != user_id:
+                raise UnauthorizedError
 
-                account_1_result = await db.execute(select(Account).filter(Account.id == transaction.account_id))
-                account_1 = account_1_result.scalars().first()
-                if not account_1:
-                    raise TransactionAccountNotFoundError(transaction.account_id)
+            category_result = await db.execute(select(Category).filter(Category.id == transaction.category_id))
+            category = category_result.scalars().first()
+            if not category:
+                raise TransactionCategoryNotFoundError(transaction.category_id)
+            if category.deleted is True:
+                raise TransactionCategoryNotFoundError(transaction.category_id)
+            if category.user_id != user_id:
+                raise UnauthorizedError
 
-                category_result = await db.execute(select(Category).filter(Category.id == transaction.category_id))
-                category = category_result.scalars().first()
-                if not category:
-                    raise TransactionCategoryNotFoundError(transaction.category_id)
+            if transaction.type == TransactionType.INTERNAL:
+                account_2_result = await db.execute(select(Account).filter(Account.id == transaction.account_id_2))
+                account_2 = account_2_result.scalars().first()
+                if not account_2:
+                    raise TransactionAccountNotFoundError(transaction.account_id_2)
+                if account_2.user_id != user_id:
+                    raise UnauthorizedError
 
-                if transaction.type == TransactionType.INTERNAL:
-                    account_2_result = await db.execute(select(Account).filter(Account.id == transaction.account_id_2))
-                    account_2 = account_2_result.scalars().first()
-                    if not account_2:
-                        raise TransactionAccountNotFoundError(transaction.account_id_2)
+            new_transaction = Transaction(**transaction.model_dump(), user_id=user_id)
 
-                new_transaction = Transaction(**transaction.model_dump(), user_id=user.id)
+            await TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
+            db.add(new_transaction)
+            await db.commit()
 
-                await TransactionRepository.update_account_balance(db, new_transaction, transaction.amount)
-                db.add(new_transaction)
+            recurring_frequency = await TransactionRepository.detect_recurring_transactions(
+                db=db,
+                transaction=new_transaction,
+                user_id=user_id
+            )
 
-                recurring_frequency = await TransactionRepository.detect_recurring_transactions(
-                    db=db,
-                    transaction=new_transaction,
-                    user_id=user.id
-                )
+            if recurring_frequency:
+                return {"transaction": new_transaction, "recurring_frequency": recurring_frequency}
 
-                if recurring_frequency:
-                    return {"transaction": new_transaction, "recurring_frequency": recurring_frequency}
-
-                return {"transaction": new_transaction, "recurring_frequency": None}
+            return {"transaction": new_transaction, "recurring_frequency": None}
 
         except SQLAlchemyError as e:
             raise TransactionCreationError(str(e))
@@ -204,18 +221,20 @@ class TransactionRepository:
                 raise TransactionAccountNotFoundError(transaction.account_id_2)
 
     @staticmethod
-    async def delete_transaction(db: AsyncSession, transaction_id: int) -> bool:
+    async def delete_transaction(db: AsyncSession, transaction_id: int, user_id: int) -> bool:
         try:
-            async with db.begin():
-                result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
-                transaction = result.scalars().first()
-                if not transaction:
-                    raise TransactionNotFoundError(transaction_id)
+            result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
+            transaction = result.scalars().first()
+            if not transaction:
+                raise TransactionNotFoundError(transaction_id)
+            if transaction.user_id != user_id:
+                raise UnauthorizedError
 
-                await TransactionRepository.update_account_balance(db, transaction, -transaction.amount)
+            await TransactionRepository.update_account_balance(db, transaction, -transaction.amount)
 
-                await db.delete(transaction)
-                return True
+            await db.delete(transaction)
+            await db.commit()
+            return True
         except SQLAlchemyError as e:
             raise TransactionDeleteError(str(e))
 
@@ -291,5 +310,3 @@ class TransactionRepository:
             if matches_cycle:
                 return frequency
         return None
-
-

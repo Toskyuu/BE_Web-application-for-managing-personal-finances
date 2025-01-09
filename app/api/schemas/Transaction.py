@@ -49,7 +49,7 @@ class Transaction(BaseModel):
     user_id: int
     date: dtdate
     type: TransactionType
-    amount: int
+    amount: float
 
     class Config:
         from_attributes = True
