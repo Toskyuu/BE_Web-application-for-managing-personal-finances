@@ -77,6 +77,8 @@ class AccountRepository:
             account = result.scalars().first()
             if not account:
                 raise AccountNotFoundError(account_id)
+            if account.deleted is True:
+                raise AccountNotFoundError(account_id)
             if account.user_id != user_id:
                 raise UnauthorizedError
 

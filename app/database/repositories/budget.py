@@ -82,6 +82,8 @@ class BudgetRepository:
             category = category.scalars().first()
             if not category:
                 raise BudgetCategoryNotFoundError(budget.category_id)
+            if category.deleted is True:
+                raise BudgetCategoryNotFoundError(budget.category_id)
             if category.user_id != user_id:
                 raise UnauthorizedError
 
@@ -110,13 +112,15 @@ class BudgetRepository:
             if not budget:
                 raise BudgetNotFoundError(budget_id)
 
-
             if budget_update.category_id is not None:
                 category = await db.execute(select(Category).filter(Category.id == budget_update.category_id))
                 category = category.scalars().first()
 
                 if not category:
                     raise BudgetCategoryNotFoundError(budget_update.category_id)
+
+                if category.deleted is True:
+                    raise BudgetCategoryNotFoundError(budget.category_id)
 
                 if category.user_id != user_id:
                     raise UnauthorizedError

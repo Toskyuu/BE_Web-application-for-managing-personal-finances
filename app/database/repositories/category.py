@@ -8,11 +8,12 @@ from app.database.models.category import Category
 from app.database.models.user import User
 from app.exceptions.category_exceptions import CategoryNotFoundError, CategoryUserNotFoundError, CategoryCreationError, \
     CategoryUpdateError, CategoryDeleteError
+from app.exceptions.user_exceptions import UnauthorizedError
 
 
 class CategoryRepository:
     @staticmethod
-    async def get_category(db: AsyncSession, category_id: int):
+    async def get_category(db: AsyncSession, category_id: int, user_id: int) -> Category:
         result = await db.execute(select(Category).filter(
             Category.id == category_id,
             Category.deleted == False
@@ -20,6 +21,8 @@ class CategoryRepository:
         category = result.scalars().first()
         if not category:
             raise CategoryNotFoundError(category_id)
+        if category.user_id != user_id:
+            raise UnauthorizedError
         return category
 
     @staticmethod
@@ -42,9 +45,9 @@ class CategoryRepository:
         result = await db.execute(
             select(Category).
             filter(
-            Category.user_id == user_id,
-            Category.deleted == False
-        )
+                Category.user_id == user_id,
+                Category.deleted == False
+            )
             .order_by(sort_order(getattr(Category, sort_by)))
             .offset(offset)
             .limit(size)
@@ -69,18 +72,23 @@ class CategoryRepository:
 
     @staticmethod
     async def update_category(
-            db: AsyncSession, category_id: int, category_update: CategoryUpdate) -> Category:
+            db: AsyncSession, category_id: int, category_update: CategoryUpdate, user_id: int) -> Category:
         try:
-            async with db.begin():
-                result = await db.execute(select(Category).filter(Category.id == category_id))
-                category = result.scalars().first()
-                if not category:
-                    raise CategoryNotFoundError(category_id)
+            result = await db.execute(select(Category).filter(Category.id == category_id))
+            category = result.scalars().first()
+            if not category:
+                raise CategoryNotFoundError(category_id)
+            if category.deleted is True:
+                raise CategoryNotFoundError(category_id)
+            if category.user_id != user_id:
+                raise UnauthorizedError
 
-                updated_category = category_update.model_dump(exclude_unset=True)
+            updated_category = category_update.model_dump(exclude_unset=True)
 
-                for key, value in updated_category.items():
-                    setattr(category, key, value)
+            for key, value in updated_category.items():
+                setattr(category, key, value)
+
+            await db.commit()
 
             result = await db.execute(select(Category).filter(Category.id == category_id))
             return result.scalars().first()
@@ -89,15 +97,17 @@ class CategoryRepository:
             raise CategoryUpdateError(str(e))
 
     @staticmethod
-    async def delete_category(db: AsyncSession, category_id: int) -> bool:
+    async def delete_category(db: AsyncSession, category_id: int, user_id: int) -> bool:
         try:
-            async with db.begin():
-                result = await db.execute(select(Category).filter(Category.id == category_id))
-                category = result.scalars().first()
-                if not category:
-                    raise CategoryNotFoundError(category_id)
+            result = await db.execute(select(Category).filter(Category.id == category_id))
+            category = result.scalars().first()
+            if not category:
+                raise CategoryNotFoundError(category_id)
+            if category.user_id != user_id:
+                raise UnauthorizedError
 
-                category.deleted = True
-                return True
+            category.deleted = True
+            await db.commit()
+            return True
         except SQLAlchemyError as e:
             raise CategoryDeleteError(str(e))
