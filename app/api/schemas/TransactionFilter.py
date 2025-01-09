@@ -18,8 +18,8 @@ class TransactionFilter(Filter):
     type: Optional[TransactionType] = None
     page: Optional[int] = 1
     size: Optional[int] = 10
-    sort_by: Optional[str] = "date"
-    order: Optional[str] = "asc"
+    sort_by: Optional[str] = "id"
+    order: Optional[str] = "desc"
 
     @field_validator("page")
     def validate_page(cls, value):

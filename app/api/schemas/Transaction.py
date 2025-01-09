@@ -50,6 +50,7 @@ class Transaction(BaseModel):
     date: dtdate
     type: TransactionType
     amount: float
+    description: str
 
     class Config:
         from_attributes = True
