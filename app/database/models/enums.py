@@ -13,7 +13,7 @@ class TransactionType(str, enum.Enum):
     INTERNAL = "Internal"
 
 class RecurringFrequency(str, enum.Enum):
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
-    BIWEEKLY = "biweekly"
-    DAILY = "daily"
+    WEEKLY = "Weekly"
+    MONTHLY = "Monthly"
+    BIWEEKLY = "Biweekly"
+    DAILY = "Daily"
