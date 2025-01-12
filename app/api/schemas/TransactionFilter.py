@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import field_validator
@@ -9,13 +9,13 @@ from app.database.models.transaction import Transaction
 
 
 class TransactionFilter(Filter):
-    account_id: Optional[int] = None
-    category_id: Optional[int] = None
+    account_id: Optional[List[int]] = None
+    category_id: Optional[List[int]] = None
     min_amount: Optional[float] = None
     max_amount: Optional[float] = None
     date_from: Optional[date] = None
     date_to: Optional[date] = None
-    type: Optional[TransactionType] = None
+    type: Optional[List[TransactionType]] = None
     page: Optional[int] = 1
     size: Optional[int] = 10
     sort_by: Optional[str] = "id"

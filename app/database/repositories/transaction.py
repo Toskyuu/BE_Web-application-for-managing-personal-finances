@@ -36,27 +36,29 @@ class TransactionRepository:
         offset = (filters.page - 1) * filters.size
         sort_order = asc if filters.order == "asc" else desc
 
-        if filters.account_id is not None:
-            result = await db.execute(select(Account).filter(Account.id == filters.account_id))
-            account = result.scalars().first()
-            if not account:
-                raise TransactionAccountNotFoundError(filters.account_id)
-            if account.user_id != user_id:
-                raise UnauthorizedError
+        if filters.account_id:
+            result = await db.execute(select(Account).filter(Account.id.in_(filters.account_id)))
+            accounts = result.scalars().all()
+            if not accounts:
+                raise TransactionAccountNotFoundError
+            for account in accounts:
+                if account.user_id != user_id:
+                    raise UnauthorizedError
 
-        if filters.category_id is not None:
-            result = await db.execute(select(Category).filter(Category.id == filters.category_id))
-            category = result.scalars().first()
-            if not category:
-                raise TransactionCategoryNotFoundError(filters.category_id)
-            if category.user_id != user_id:
-                raise UnauthorizedError
+        if filters.category_id:
+            result = await db.execute(select(Category).filter(Category.id.in_(filters.category_id)))
+            categories = result.scalars().all()
+            if not categories:
+                raise TransactionCategoryNotFoundError
+            for category in categories:
+                if category.user_id != user_id:
+                    raise UnauthorizedError
 
         conditions = [Transaction.user_id == user_id]
         if filters.account_id:
-            conditions.append(Transaction.account_id == filters.account_id)
+            conditions.append(Transaction.account_id.in_(filters.account_id))
         if filters.category_id:
-            conditions.append(Transaction.category_id == filters.category_id)
+            conditions.append(Transaction.category_id.in_(filters.category_id))
         if filters.min_amount:
             conditions.append(Transaction.amount >= filters.min_amount)
         if filters.max_amount:
@@ -66,7 +68,7 @@ class TransactionRepository:
         if filters.date_to:
             conditions.append(Transaction.date <= filters.date_to)
         if filters.type:
-            conditions.append(Transaction.type == filters.type)
+            conditions.append(Transaction.type.in_(filters.type))
 
         query = (
             select(Transaction)
