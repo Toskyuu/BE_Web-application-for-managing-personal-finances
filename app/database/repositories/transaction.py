@@ -99,9 +99,9 @@ class TransactionRepository:
                     select(Category).filter(Category.id == transaction_update.category_id))
                 category = category_result.scalars().first()
                 if category is None:
-                    raise TransactionCategoryNotFoundError(transaction_update.category_id)
+                    raise TransactionCategoryNotFoundError()
                 if category.deleted is True:
-                    raise TransactionCategoryNotFoundError(transaction_update.category_id)
+                    raise TransactionCategoryNotFoundError()
                 if category.user_id != user_id:
                     raise UnauthorizedError
 
@@ -111,7 +111,7 @@ class TransactionRepository:
                     select(Account).filter(Account.id == transaction_update.account_id))
                 account = account_result.scalars().first()
                 if account is None:
-                    raise TransactionAccountNotFoundError(transaction_update.account_id)
+                    raise TransactionAccountNotFoundError()
                 if account.user_id != user_id:
                     raise UnauthorizedError
 
@@ -120,7 +120,7 @@ class TransactionRepository:
                     select(Account).filter(Account.id == transaction_update.account_id_2))
                 account_2 = account_2_result.scalars().first()
                 if account_2 is None:
-                    raise TransactionAccountNotFoundError(transaction_update.account_id_2)
+                    raise TransactionAccountNotFoundError()
                 if account_2.user_id != user_id:
                     raise UnauthorizedError
             else:
@@ -135,11 +135,12 @@ class TransactionRepository:
             if 'amount' in updated_transaction:
                 amount_difference = updated_transaction['amount'] - previous_amount
                 await TransactionRepository.update_account_balance(db, transaction, amount_difference)
-
+            await db.commit()
             result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
             return result.scalars().first()
 
         except SQLAlchemyError as e:
+            await db.rollback()
             raise TransactionUpdateError(str(e))
 
     @staticmethod
@@ -187,6 +188,7 @@ class TransactionRepository:
             return {"transaction": new_transaction, "recurring_frequency": None}
 
         except SQLAlchemyError as e:
+            await db.rollback()
             raise TransactionCreationError(str(e))
 
     @staticmethod
@@ -238,6 +240,7 @@ class TransactionRepository:
             await db.commit()
             return True
         except SQLAlchemyError as e:
+            await db.rollback()
             raise TransactionDeleteError(str(e))
 
     @staticmethod

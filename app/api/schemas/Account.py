@@ -47,8 +47,8 @@ class AccountList(BaseModel):
 
     @field_validator("sort_by")
     def validate_sort_by(cls, value):
-        if value and value not in ["id", "balance", "initial_balance", "type"]:
-            raise ValueError("You can only sort by id, balance, initial balance or type")
+        if value and value not in ["id", "balance", "initial_balance", "type", "name"]:
+            raise ValueError("You can only sort by id, name, balance, initial balance or type")
         return value
 
 

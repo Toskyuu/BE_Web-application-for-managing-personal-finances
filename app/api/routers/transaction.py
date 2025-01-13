@@ -28,6 +28,7 @@ async def list_transactions(
         db: AsyncSession = Depends(get_db)
 ):
     try:
+        print( filters)
         return await TransactionRepository.list_transactions(
             db, filters, user_id=user.id
         )
