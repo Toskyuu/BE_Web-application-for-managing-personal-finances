@@ -27,7 +27,7 @@ async def list_recurring_transactions(
         db: AsyncSession = Depends(get_db)):
     try:
         return await RecurringTransactionRepository.get_recurring_transactions(
-            db, user_id=user.id, page=recurring_transaction.page, size=recurring_transaction.page, sort_by=recurring_transaction.sort_by, order=recurring_transaction.order)
+            db, user_id=user.id, page=recurring_transaction.page, size=recurring_transaction.size, sort_by=recurring_transaction.sort_by, order=recurring_transaction.order)
     except RecurringTransactionAccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
