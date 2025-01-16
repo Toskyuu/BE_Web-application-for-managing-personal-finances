@@ -1,3 +1,5 @@
+from datetime import datetime, time
+
 from sqlalchemy import asc, desc, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -149,16 +151,16 @@ class TransactionRepository:
             account_1_result = await db.execute(select(Account).filter(Account.id == transaction.account_id))
             account_1 = account_1_result.scalars().first()
             if not account_1:
-                raise TransactionAccountNotFoundError(transaction.account_id)
+                raise TransactionAccountNotFoundError()
             if account_1.user_id != user_id:
                 raise UnauthorizedError
 
             category_result = await db.execute(select(Category).filter(Category.id == transaction.category_id))
             category = category_result.scalars().first()
             if not category:
-                raise TransactionCategoryNotFoundError(transaction.category_id)
+                raise TransactionCategoryNotFoundError()
             if category.deleted is True:
-                raise TransactionCategoryNotFoundError(transaction.category_id)
+                raise TransactionCategoryNotFoundError()
             if category.user_id != user_id:
                 raise UnauthorizedError
 
@@ -166,7 +168,7 @@ class TransactionRepository:
                 account_2_result = await db.execute(select(Account).filter(Account.id == transaction.account_id_2))
                 account_2 = account_2_result.scalars().first()
                 if not account_2:
-                    raise TransactionAccountNotFoundError(transaction.account_id_2)
+                    raise TransactionAccountNotFoundError()
                 if account_2.user_id != user_id:
                     raise UnauthorizedError
 
@@ -199,7 +201,7 @@ class TransactionRepository:
             if account:
                 account.balance += amount_difference
             else:
-                raise TransactionAccountNotFoundError(transaction.account_id)
+                raise TransactionAccountNotFoundError()
 
         elif transaction.type == TransactionType.OUTCOME:
             result = await db.execute(select(Account).filter(Account.id == transaction.account_id))
@@ -207,7 +209,7 @@ class TransactionRepository:
             if account:
                 account.balance -= amount_difference
             else:
-                raise TransactionAccountNotFoundError(transaction.account_id)
+                raise TransactionAccountNotFoundError()
 
         elif transaction.type == TransactionType.INTERNAL:
             result_1 = await db.execute(select(Account).filter(Account.id == transaction.account_id))
@@ -220,9 +222,9 @@ class TransactionRepository:
                 account_1.balance -= amount_difference
                 account_2.balance += amount_difference
             if not account_1:
-                raise TransactionAccountNotFoundError(transaction.account_id)
+                raise TransactionAccountNotFoundError()
             if not account_2:
-                raise TransactionAccountNotFoundError(transaction.account_id_2)
+                raise TransactionAccountNotFoundError()
 
     @staticmethod
     async def delete_transaction(db: AsyncSession, transaction_id: int, user_id: int) -> bool:
@@ -254,18 +256,18 @@ class TransactionRepository:
             account_1_result = await db.execute(select(Account).filter(Account.id == transaction.account_id))
             account_1 = account_1_result.scalars().first()
             if not account_1:
-                raise TransactionAccountNotFoundError(transaction.account_id)
+                raise TransactionAccountNotFoundError()
 
             category_result = await db.execute(select(Category).filter(Category.id == transaction.category_id))
             category = category_result.scalars().first()
             if not category:
-                raise TransactionCategoryNotFoundError(transaction.category_id)
+                raise TransactionCategoryNotFoundError()
 
             if transaction.type == TransactionType.INTERNAL:
                 account_2_result = await db.execute(select(Account).filter(Account.id == transaction.account_id_2))
                 account_2 = account_2_result.scalars().first()
                 if not account_2:
-                    raise TransactionAccountNotFoundError(transaction.account_id_2)
+                    raise TransactionAccountNotFoundError()
 
             new_transaction = Transaction(**transaction.model_dump(), user_id=user.id)
 
@@ -295,7 +297,7 @@ class TransactionRepository:
                 Transaction.account_id == transaction.account_id,
                 Transaction.type == transaction.type,
                 Transaction.amount == transaction.amount,
-                Transaction.date <= transaction.date
+                Transaction.transaction_date <= transaction.transaction_date
             )
         )
         past_transactions = past_transactions.scalars().all()
@@ -305,7 +307,7 @@ class TransactionRepository:
 
         date_diffs = []
         for i in range(1, len(past_transactions)):
-            diff = (past_transactions[i].date - past_transactions[i - 1].date).days
+            diff = (past_transactions[i].transaction_date - past_transactions[i - 1].transaction_date).days
             date_diffs.append(diff)
 
         for cycle, frequency in cycle_map.items():

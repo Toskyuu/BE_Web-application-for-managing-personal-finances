@@ -12,7 +12,7 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Float, nullable=False)
     description = Column(String)
-    date = Column(Date, default=datetime.date.today)
+    transaction_date = Column(Date, default=datetime.date.today)
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     account_id_2 = Column(Integer, ForeignKey("accounts.id"))
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
