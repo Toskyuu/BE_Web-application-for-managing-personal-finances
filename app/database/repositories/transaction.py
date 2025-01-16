@@ -1,5 +1,3 @@
-from datetime import datetime, time
-
 from sqlalchemy import asc, desc, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,16 +64,20 @@ class TransactionRepository:
         if filters.max_amount:
             conditions.append(Transaction.amount <= filters.max_amount)
         if filters.date_from:
-            conditions.append(Transaction.date >= filters.date_from)
+            conditions.append(Transaction.transaction_date >= filters.date_from)
         if filters.date_to:
-            conditions.append(Transaction.date <= filters.date_to)
+            conditions.append(Transaction.transaction_date <= filters.date_to)
         if filters.type:
             conditions.append(Transaction.type.in_(filters.type))
+
+        sort_criteria = [sort_order(getattr(Transaction, filters.sort_by))]
+        if filters.sort_by == "transaction_date":
+            sort_criteria.append(sort_order(Transaction.id))
 
         query = (
             select(Transaction)
             .filter(and_(*conditions))
-            .order_by(sort_order(getattr(Transaction, filters.sort_by)))
+            .order_by(*sort_criteria)
             .offset(offset)
             .limit(filters.size)
         )
@@ -106,7 +108,6 @@ class TransactionRepository:
                     raise TransactionCategoryNotFoundError()
                 if category.user_id != user_id:
                     raise UnauthorizedError
-
 
             if transaction_update.account_id is not None:
                 account_result = await db.execute(
