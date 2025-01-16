@@ -34,7 +34,6 @@ class CategoryRepository:
             sort_by: str,
             order: str
     ):
-        offset = (page - 1) * size
         sort_order = asc if order == "asc" else desc
 
         result = await db.execute(select(User).filter(User.id == user_id))
@@ -42,16 +41,27 @@ class CategoryRepository:
         if not user:
             raise CategoryUserNotFoundError(user_id)
 
-        result = await db.execute(
-            select(Category).
-            filter(
-                Category.user_id == user_id,
-                Category.deleted == False
+        if page and size:
+            offset = (page - 1) * size
+            result = await db.execute(
+                select(Category).
+                filter(
+                    Category.user_id == user_id,
+                    Category.deleted == False
+                )
+                .order_by(sort_order(getattr(Category, sort_by)))
+                .offset(offset)
+                .limit(size)
             )
-            .order_by(sort_order(getattr(Category, sort_by)))
-            .offset(offset)
-            .limit(size)
-        )
+        else:
+            result = await db.execute(
+                select(Category).
+                filter(
+                    Category.user_id == user_id,
+                    Category.deleted == False
+                )
+                .order_by(sort_order(getattr(Category, sort_by))))
+
         return result.scalars().all()
 
     @staticmethod

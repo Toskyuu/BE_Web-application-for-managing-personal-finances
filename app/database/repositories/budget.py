@@ -53,13 +53,16 @@ class BudgetRepository:
         result = await db.execute(
             select(BudgetModel)
             .filter(BudgetModel.user_id == user_id)
-            .order_by(sort_order(getattr(BudgetModel, sort_by)))
+            .order_by(
+                sort_order(getattr(BudgetModel, sort_by))
+                if sort_by != "spent_in_budget" else None
+            )
             .offset(offset)
             .limit(size)
         )
         budgets = result.scalars().all()
 
-        return [
+        budgets_with_spent = [
             BudgetUsage(
                 id=budget.id,
                 category_id=budget.category_id,
@@ -70,6 +73,11 @@ class BudgetRepository:
             )
             for budget in budgets
         ]
+
+        if sort_by == "spent_in_budget":
+            budgets_with_spent.sort(key=lambda x: x.spent_in_budget, reverse=(order == "desc"))
+
+        return budgets_with_spent
 
     @staticmethod
     async def create_budget(db: AsyncSession, budget: BudgetCreate, user_id: int) -> BudgetUsage:

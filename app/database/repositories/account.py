@@ -33,7 +33,6 @@ class AccountRepository:
                                    size: int,
                                    sort_by: str,
                                    order: str):
-        offset = (page - 1) * size
         sort_order = asc if order == "asc" else desc
 
         result = await db.execute(select(User).filter(User.id == user_id))
@@ -41,16 +40,27 @@ class AccountRepository:
         if not user:
             raise AccountUserNotFoundError(user_id)
 
-        result = await db.execute(
-            select(Account)
-            .filter(
-                Account.user_id == user_id,
-                Account.deleted == False
+        if page and size:
+            offset = (page - 1) * size
+            result = await db.execute(
+                select(Account)
+                .filter(
+                    Account.user_id == user_id,
+                    Account.deleted == False
+                )
+                .order_by(sort_order(getattr(Account, sort_by)))
+                .offset(offset)
+                .limit(size)
             )
-            .order_by(sort_order(getattr(Account, sort_by)))
-            .offset(offset)
-            .limit(size)
-        )
+        else:
+            result = await db.execute(
+                select(Account)
+                .filter(
+                    Account.user_id == user_id,
+                    Account.deleted == False
+                )
+                .order_by(sort_order(getattr(Account, sort_by))))
+
         return result.scalars().all()
 
     @staticmethod

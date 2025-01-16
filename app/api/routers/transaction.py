@@ -23,11 +23,12 @@ current_user = fastapi_users.current_user()
 
 @transaction_router.post("/transactions", response_model=list[Transaction])
 async def list_transactions(
-        filters: TransactionFilter = FilterDepends(TransactionFilter),
+        filters: TransactionFilter,
         user: User = Depends(current_user),
         db: AsyncSession = Depends(get_db)
 ):
     try:
+        print( filters)
         return await TransactionRepository.list_transactions(
             db, filters, user_id=user.id
         )

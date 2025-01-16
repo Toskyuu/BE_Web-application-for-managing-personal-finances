@@ -15,15 +15,13 @@ class TransactionUserNotFoundError(TransactionError):
 
 
 class TransactionAccountNotFoundError(TransactionError):
-    def __init__(self, account_id: int):
-        self.account_id = account_id
-        super().__init__(f"Account with ID {account_id} not found.")
+    def __init__(self):
+        super().__init__(f"Accounts not found.")
 
 
 class TransactionCategoryNotFoundError(TransactionError):
-    def __init__(self, category_id: int):
-        self.category_id = category_id
-        super().__init__(f"Category with ID {category_id} not found.")
+    def __init__(self):
+        super().__init__(f"Categories not found.")
 
 
 class TransactionCreationError(TransactionError):

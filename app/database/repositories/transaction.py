@@ -36,27 +36,29 @@ class TransactionRepository:
         offset = (filters.page - 1) * filters.size
         sort_order = asc if filters.order == "asc" else desc
 
-        if filters.account_id is not None:
-            result = await db.execute(select(Account).filter(Account.id == filters.account_id))
-            account = result.scalars().first()
-            if not account:
-                raise TransactionAccountNotFoundError(filters.account_id)
-            if account.user_id != user_id:
-                raise UnauthorizedError
+        if filters.account_id:
+            result = await db.execute(select(Account).filter(Account.id.in_(filters.account_id)))
+            accounts = result.scalars().all()
+            if not accounts:
+                raise TransactionAccountNotFoundError
+            for account in accounts:
+                if account.user_id != user_id:
+                    raise UnauthorizedError
 
-        if filters.category_id is not None:
-            result = await db.execute(select(Category).filter(Category.id == filters.category_id))
-            category = result.scalars().first()
-            if not category:
-                raise TransactionCategoryNotFoundError(filters.category_id)
-            if category.user_id != user_id:
-                raise UnauthorizedError
+        if filters.category_id:
+            result = await db.execute(select(Category).filter(Category.id.in_(filters.category_id)))
+            categories = result.scalars().all()
+            if not categories:
+                raise TransactionCategoryNotFoundError
+            for category in categories:
+                if category.user_id != user_id:
+                    raise UnauthorizedError
 
         conditions = [Transaction.user_id == user_id]
         if filters.account_id:
-            conditions.append(Transaction.account_id == filters.account_id)
+            conditions.append(Transaction.account_id.in_(filters.account_id))
         if filters.category_id:
-            conditions.append(Transaction.category_id == filters.category_id)
+            conditions.append(Transaction.category_id.in_(filters.category_id))
         if filters.min_amount:
             conditions.append(Transaction.amount >= filters.min_amount)
         if filters.max_amount:
@@ -66,7 +68,7 @@ class TransactionRepository:
         if filters.date_to:
             conditions.append(Transaction.date <= filters.date_to)
         if filters.type:
-            conditions.append(Transaction.type == filters.type)
+            conditions.append(Transaction.type.in_(filters.type))
 
         query = (
             select(Transaction)
@@ -97,9 +99,9 @@ class TransactionRepository:
                     select(Category).filter(Category.id == transaction_update.category_id))
                 category = category_result.scalars().first()
                 if category is None:
-                    raise TransactionCategoryNotFoundError(transaction_update.category_id)
+                    raise TransactionCategoryNotFoundError()
                 if category.deleted is True:
-                    raise TransactionCategoryNotFoundError(transaction_update.category_id)
+                    raise TransactionCategoryNotFoundError()
                 if category.user_id != user_id:
                     raise UnauthorizedError
 
@@ -109,7 +111,7 @@ class TransactionRepository:
                     select(Account).filter(Account.id == transaction_update.account_id))
                 account = account_result.scalars().first()
                 if account is None:
-                    raise TransactionAccountNotFoundError(transaction_update.account_id)
+                    raise TransactionAccountNotFoundError()
                 if account.user_id != user_id:
                     raise UnauthorizedError
 
@@ -118,7 +120,7 @@ class TransactionRepository:
                     select(Account).filter(Account.id == transaction_update.account_id_2))
                 account_2 = account_2_result.scalars().first()
                 if account_2 is None:
-                    raise TransactionAccountNotFoundError(transaction_update.account_id_2)
+                    raise TransactionAccountNotFoundError()
                 if account_2.user_id != user_id:
                     raise UnauthorizedError
             else:
@@ -133,11 +135,12 @@ class TransactionRepository:
             if 'amount' in updated_transaction:
                 amount_difference = updated_transaction['amount'] - previous_amount
                 await TransactionRepository.update_account_balance(db, transaction, amount_difference)
-
+            await db.commit()
             result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
             return result.scalars().first()
 
         except SQLAlchemyError as e:
+            await db.rollback()
             raise TransactionUpdateError(str(e))
 
     @staticmethod
@@ -185,6 +188,7 @@ class TransactionRepository:
             return {"transaction": new_transaction, "recurring_frequency": None}
 
         except SQLAlchemyError as e:
+            await db.rollback()
             raise TransactionCreationError(str(e))
 
     @staticmethod
@@ -236,6 +240,7 @@ class TransactionRepository:
             await db.commit()
             return True
         except SQLAlchemyError as e:
+            await db.rollback()
             raise TransactionDeleteError(str(e))
 
     @staticmethod
