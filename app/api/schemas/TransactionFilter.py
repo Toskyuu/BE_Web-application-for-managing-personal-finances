@@ -41,8 +41,8 @@ class TransactionFilter(Filter):
 
     @field_validator("sort_by")
     def validate_sort_by(cls, value):
-        if value and value not in ["date", "amount"]:
-            raise ValueError("You can only sort by date or amount")
+        if value and value not in ["id", "transaction_date", "amount"]:
+            raise ValueError("You can only sort by id, transaction_date or amount")
         return value
 
     class Constants(Filter.Constants):
