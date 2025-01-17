@@ -17,10 +17,13 @@ class BudgetRepository:
 
     @staticmethod
     async def get_budget(db: AsyncSession, budget_id: int, user_id: int) -> BudgetUsage:
-        result = await db.execute(select(BudgetModel).filter(BudgetModel.id == budget_id))
-        budget = result.scalars().first()
+        result = await db.execute(select(BudgetModel, Category.name.label("category_name"))
+                                  .join(Category, BudgetModel.category_id == Category.id)
+                                  .filter(BudgetModel.id == budget_id))
+        budget = result.first()
         if not budget:
             raise BudgetNotFoundError(budget_id)
+        budget, category_name = budget
         if budget.user_id != user_id:
             raise UnauthorizedError
 
@@ -30,7 +33,8 @@ class BudgetRepository:
             limit=budget.limit,
             month_year=budget.month_year,
             user_id=budget.user_id,
-            spent_in_budget=await get_spent(db, budget.id)
+            spent_in_budget=await get_spent(db, budget.id),
+            category_name=category_name
         )
 
     @staticmethod
@@ -51,7 +55,8 @@ class BudgetRepository:
             raise BudgetUserNotFoundError(user_id)
 
         result = await db.execute(
-            select(BudgetModel)
+            select(BudgetModel, Category.name.label("category_name"))
+            .join(Category, BudgetModel.category_id == Category.id)
             .filter(BudgetModel.user_id == user_id)
             .order_by(
                 sort_order(getattr(BudgetModel, sort_by))
@@ -60,7 +65,7 @@ class BudgetRepository:
             .offset(offset)
             .limit(size)
         )
-        budgets = result.scalars().all()
+        budgets = result.fetchall()
 
         budgets_with_spent = [
             BudgetUsage(
@@ -70,8 +75,9 @@ class BudgetRepository:
                 month_year=budget.month_year,
                 user_id=budget.user_id,
                 spent_in_budget=await get_spent(db, budget.id),
+                category_name=category_name
             )
-            for budget in budgets
+            for budget, category_name in budgets
         ]
 
         if sort_by == "spent_in_budget":
@@ -106,6 +112,7 @@ class BudgetRepository:
                 month_year=db_budget.month_year,
                 user_id=db_budget.user_id,
                 spent_in_budget=await get_spent(db, db_budget.id),
+                category_name=category.name
             )
 
         except SQLAlchemyError as e:
@@ -140,7 +147,11 @@ class BudgetRepository:
 
             await db.commit()
 
-            result = await db.execute(select(BudgetModel).filter(BudgetModel.id == budget_id))
+            result = await db.execute(
+                select(BudgetModel, Category.name.label("category_name"))
+                .join(Category, BudgetModel.category_id == Category.id)
+                .filter(BudgetModel.id == budget_id))
+
             budget = result.scalars().first()
             return BudgetUsage(
                 id=budget.id,
@@ -149,6 +160,7 @@ class BudgetRepository:
                 month_year=budget.month_year,
                 user_id=budget.user_id,
                 spent_in_budget=await get_spent(db, budget.id),
+                category_name=budget.category_name
             )
 
         except SQLAlchemyError as e:

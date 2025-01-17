@@ -3,8 +3,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.schemas.Account import AccountCreate, AccountUpdate
 from app.api.schemas.Account import Account as AccountSchema
+from app.api.schemas.Account import AccountCreate, AccountUpdate
 from app.database.models.account import Account
 from app.database.models.user import User
 from app.exceptions.account_exceptions import AccountCreationError, AccountNotFoundError, AccountUpdateError, \

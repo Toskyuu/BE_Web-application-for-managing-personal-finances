@@ -1,11 +1,9 @@
 import os
-from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends
-from fastapi_users import FastAPIUsers, models
+from fastapi_users import FastAPIUsers
 from fastapi_users.manager import BaseUserManager
-from starlette.requests import Request
 
 from app.database.models.user import User, get_user_db
 from app.services.auth import auth_backend
