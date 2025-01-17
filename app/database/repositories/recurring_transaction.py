@@ -2,8 +2,10 @@ from sqlalchemy import asc, desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import aliased
 
-from app.api.schemas.RecurringTransaction import RecurringTransactionCreate, RecurringTransactionUpdate
+from app.api.schemas.RecurringTransaction import RecurringTransactionCreate, RecurringTransactionUpdate, \
+    RecurringTransaction as RecurringTransactionSchema
 from app.database.models.account import Account
 from app.database.models.category import Category
 from app.database.models.enums import TransactionType
@@ -21,9 +23,33 @@ class RecurringTransactionRepository:
     @staticmethod
     async def get_recurring_transaction(db: AsyncSession, recurring_transaction_id: int,
                                         user_id: int) -> RecurringTransaction:
-        result = await db.execute(select(RecurringTransaction).filter(
-            RecurringTransaction.id == recurring_transaction_id))
-        recurring_transaction = result.scalar_one_or_none()
+        account_alias_1 = aliased(Account)
+        account_alias_2 = aliased(Account)
+
+        result = await db.execute(
+            select(
+                RecurringTransaction.id,
+                RecurringTransaction.description,
+                RecurringTransaction.category_id,
+                RecurringTransaction.account_id,
+                RecurringTransaction.account_id_2,
+                RecurringTransaction.user_id,
+                RecurringTransaction.type,
+                RecurringTransaction.amount,
+                RecurringTransaction.start_date,
+                RecurringTransaction.next_occurrence,
+                RecurringTransaction.recurring_frequency,
+                Category.name.label("category_name"),
+                account_alias_1.name.label("account_name"),
+                account_alias_2.name.label("account_2_name")
+            )
+            .join(Category, Category.id == RecurringTransaction.category_id)
+            .join(account_alias_1, account_alias_1.id == RecurringTransaction.account_id)
+            .join(account_alias_2, account_alias_2.id == RecurringTransaction.account_id_2, isouter=True)
+            .filter(RecurringTransaction.id == recurring_transaction_id))
+
+        recurring_transaction = result.first()
+
         if not recurring_transaction:
             raise RecurringTransactionNotFoundError(recurring_transaction_id)
         if recurring_transaction.user_id != user_id:
@@ -46,15 +72,37 @@ class RecurringTransactionRepository:
         user = user.scalar_one_or_none()
         if not user:
             raise RecurringTransactionUserNotFoundError(user_id)
+
+        account_alias_1 = aliased(Account)
+        account_alias_2 = aliased(Account)
+
         result = await db.execute(
-            select(RecurringTransaction)
-            .filter(
-                RecurringTransaction.user_id == user_id)
+            select(
+                RecurringTransaction.id,
+                RecurringTransaction.description,
+                RecurringTransaction.category_id,
+                RecurringTransaction.account_id,
+                RecurringTransaction.account_id_2,
+                RecurringTransaction.user_id,
+                RecurringTransaction.type,
+                RecurringTransaction.amount,
+                RecurringTransaction.start_date,
+                RecurringTransaction.next_occurrence,
+                RecurringTransaction.recurring_frequency,
+                Category.name.label("category_name"),
+                account_alias_1.name.label("account_name"),
+                account_alias_2.name.label("account_2_name")
+            )
+            .join(Category, Category.id == RecurringTransaction.category_id)
+            .join(account_alias_1, account_alias_1.id == RecurringTransaction.account_id)
+            .join(account_alias_2, account_alias_2.id == RecurringTransaction.account_id_2, isouter=True)
+            .filter(RecurringTransaction.user_id == user_id)
             .order_by(sort_order(getattr(RecurringTransaction, sort_by)))
             .offset(offset)
             .limit(size)
         )
-        return result.scalars().all()
+
+        return result.all()
 
     @staticmethod
     async def create_recurring_transaction(db: AsyncSession, recurring_transaction: RecurringTransactionCreate,
@@ -111,11 +159,26 @@ class RecurringTransactionRepository:
             db.add(new_transaction)
             await db.commit()
             await db.refresh(new_transaction)
-            return new_transaction
+
+            return RecurringTransactionSchema(
+                id=new_transaction.id,
+                description=new_transaction.description,
+                category_id=new_transaction.category_id,
+                account_id=new_transaction.account_id,
+                account_id_2=new_transaction.account_id_2 if new_transaction.type == TransactionType.INTERNAL else None,
+                user_id=new_transaction.user_id,
+                type=new_transaction.type,
+                amount=new_transaction.amount,
+                start_date=new_transaction.start_date,
+                next_occurrence=new_transaction.next_occurrence,
+                recurring_frequency=recurring_transaction.recurring_frequency,
+                category_name=category.name,
+                account_name=account_1.name,
+                account_2_name=account_2.name if new_transaction.type == TransactionType.INTERNAL else None
+            )
 
         except SQLAlchemyError as e:
             raise RecurringTransactionCreationError(str(e))
-
 
     @staticmethod
     async def update_transaction(db: AsyncSession,
@@ -181,13 +244,36 @@ class RecurringTransactionRepository:
                                                                             amount_difference)
 
             await db.commit()
-            result = await db.execute(select(RecurringTransaction).filter(
-                RecurringTransaction.id == recurring_transaction_id))
-            return result.scalar_one_or_none()
+
+            account_alias_1 = aliased(Account)
+            account_alias_2 = aliased(Account)
+
+            result = await db.execute(
+                select(
+                    RecurringTransaction.id,
+                    RecurringTransaction.description,
+                    RecurringTransaction.category_id,
+                    RecurringTransaction.account_id,
+                    RecurringTransaction.account_id_2,
+                    RecurringTransaction.user_id,
+                    RecurringTransaction.type,
+                    RecurringTransaction.amount,
+                    RecurringTransaction.start_date,
+                    RecurringTransaction.next_occurrence,
+                    RecurringTransaction.recurring_frequency,
+                    Category.name.label("category_name"),
+                    account_alias_1.name.label("account_name"),
+                    account_alias_2.name.label("account_2_name")
+                )
+                .join(Category, Category.id == RecurringTransaction.category_id)
+                .join(account_alias_1, account_alias_1.id == RecurringTransaction.account_id)
+                .join(account_alias_2, account_alias_2.id == RecurringTransaction.account_id_2, isouter=True)
+                .filter(RecurringTransaction.id == recurring_transaction_id))
+
+            return result.first()
 
         except SQLAlchemyError as e:
             raise RecurringTransactionUpdateError(str(e))
-
 
     @staticmethod
     async def update_account_balance(db: AsyncSession, recurring_transaction: RecurringTransaction,
@@ -221,7 +307,6 @@ class RecurringTransactionRepository:
                 raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
             if not account_2:
                 raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id_2)
-
 
     @staticmethod
     async def delete_transaction(db: AsyncSession,

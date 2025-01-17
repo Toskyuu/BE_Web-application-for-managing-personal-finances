@@ -36,6 +36,7 @@ class BudgetUsage(BudgetBase):
     id: int
     user_id: int
     spent_in_budget: float
+    category_name: str
 
 
 class BudgetList(BaseModel):
@@ -76,6 +77,7 @@ class Budget(BaseModel):
     category_id: int
     user_id: int
     spent_in_budget: Optional[float] = None
+    category_name: str
 
     class Config:
         from_attributes = True

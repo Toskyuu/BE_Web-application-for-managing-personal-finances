@@ -1,11 +1,10 @@
-from datetime import datetime, time
-
 from sqlalchemy import asc, desc, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import aliased
 
-from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate
+from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate, Transaction as TransactionSchema
 from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.models.account import Account
 from app.database.models.category import Category
@@ -21,8 +20,30 @@ from app.exceptions.user_exceptions import UnauthorizedError
 class TransactionRepository:
     @staticmethod
     async def get_transaction(db: AsyncSession, transaction_id: int, user_id: int) -> Transaction:
-        result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
-        transaction = result.scalars().first()
+        account_alias_1 = aliased(Account)
+        account_alias_2 = aliased(Account)
+
+        result = await db.execute(
+            select(
+                Transaction.id,
+                Transaction.description,
+                Transaction.category_id,
+                Transaction.account_id,
+                Transaction.account_id_2,
+                Transaction.user_id,
+                Transaction.transaction_date,
+                Transaction.type,
+                Transaction.amount,
+                Category.name.label("category_name"),
+                account_alias_1.name.label("account_name"),
+                account_alias_2.name.label("account_2_name")
+            )
+            .join(Category, Category.id == Transaction.category_id)
+            .join(account_alias_1, account_alias_1.id == Transaction.account_id)
+            .join(account_alias_2, account_alias_2.id == Transaction.account_id_2, isouter=True)
+            .filter(Transaction.id == transaction_id))
+
+        transaction = result.first()
         if not transaction:
             raise TransactionNotFoundError(transaction_id)
         if transaction.user_id != user_id:
@@ -66,14 +87,33 @@ class TransactionRepository:
         if filters.max_amount:
             conditions.append(Transaction.amount <= filters.max_amount)
         if filters.date_from:
-            conditions.append(Transaction.date >= filters.date_from)
+            conditions.append(Transaction.transaction_date >= filters.date_from)
         if filters.date_to:
-            conditions.append(Transaction.date <= filters.date_to)
+            conditions.append(Transaction.transaction_date <= filters.date_to)
         if filters.type:
             conditions.append(Transaction.type.in_(filters.type))
 
+        account_alias_1 = aliased(Account)
+        account_alias_2 = aliased(Account)
+
         query = (
-            select(Transaction)
+            select(
+                Transaction.id,
+                Transaction.description,
+                Transaction.category_id,
+                Transaction.account_id,
+                Transaction.account_id_2,
+                Transaction.user_id,
+                Transaction.transaction_date,
+                Transaction.type,
+                Transaction.amount,
+                Category.name.label("category_name"),
+                account_alias_1.name.label("account_name"),
+                account_alias_2.name.label("account_2_name")
+            )
+            .join(Category, Category.id == Transaction.category_id)
+            .join(account_alias_1, account_alias_1.id == Transaction.account_id)
+            .join(account_alias_2, account_alias_2.id == Transaction.account_id_2, isouter=True)
             .filter(and_(*conditions))
             .order_by(sort_order(getattr(Transaction, filters.sort_by)))
             .offset(offset)
@@ -81,7 +121,7 @@ class TransactionRepository:
         )
 
         result = await db.execute(query)
-        return result.scalars().all()
+        return result.all()
 
     @staticmethod
     async def update_transaction(db: AsyncSession,
@@ -106,7 +146,6 @@ class TransactionRepository:
                     raise TransactionCategoryNotFoundError()
                 if category.user_id != user_id:
                     raise UnauthorizedError
-
 
             if transaction_update.account_id is not None:
                 account_result = await db.execute(
@@ -138,8 +177,31 @@ class TransactionRepository:
                 amount_difference = updated_transaction['amount'] - previous_amount
                 await TransactionRepository.update_account_balance(db, transaction, amount_difference)
             await db.commit()
-            result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
-            return result.scalars().first()
+
+            account_alias_1 = aliased(Account)
+            account_alias_2 = aliased(Account)
+
+            result = await db.execute(
+                select(
+                    Transaction.id,
+                    Transaction.description,
+                    Transaction.category_id,
+                    Transaction.account_id,
+                    Transaction.account_id_2,
+                    Transaction.user_id,
+                    Transaction.transaction_date,
+                    Transaction.type,
+                    Transaction.amount,
+                    Category.name.label("category_name"),
+                    account_alias_1.name.label("account_name"),
+                    account_alias_2.name.label("account_2_name")
+                )
+                .join(Category, Category.id == Transaction.category_id)
+                .join(account_alias_1, account_alias_1.id == Transaction.account_id)
+                .join(account_alias_2, account_alias_2.id == Transaction.account_id_2, isouter=True)
+                .filter(Transaction.id == transaction_id))
+
+            return result.first()
 
         except SQLAlchemyError as e:
             await db.rollback()
@@ -183,11 +245,25 @@ class TransactionRepository:
                 transaction=new_transaction,
                 user_id=user_id
             )
+            transaction=TransactionSchema(
+                id=new_transaction.id,
+                description = new_transaction.description,
+                category_id=new_transaction.category_id,
+                account_id=new_transaction.account_id,
+                account_id_2=new_transaction.account_id_2 if new_transaction.type == TransactionType.INTERNAL else None,
+                user_id=user_id,
+                transaction_date=new_transaction.transaction_date,
+                type=new_transaction.type,
+                amount=new_transaction.amount,
+                category_name=category.name,
+                account_name=account_1.name,
+                account_2_name=account_2.name if new_transaction.type == TransactionType.INTERNAL else None
+            )
 
             if recurring_frequency:
-                return {"transaction": new_transaction, "recurring_frequency": recurring_frequency}
+                return {"transaction": transaction, "recurring_frequency": recurring_frequency}
 
-            return {"transaction": new_transaction, "recurring_frequency": None}
+            return {"transaction": transaction, "recurring_frequency": None}
 
         except SQLAlchemyError as e:
             await db.rollback()
