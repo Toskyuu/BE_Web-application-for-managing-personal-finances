@@ -152,7 +152,9 @@ class BudgetRepository:
                 .join(Category, BudgetModel.category_id == Category.id)
                 .filter(BudgetModel.id == budget_id))
 
-            budget = result.scalars().first()
+            budget = result.first()
+            budget, category_name = budget
+
             return BudgetUsage(
                 id=budget.id,
                 category_id=budget.category_id,
@@ -160,9 +162,8 @@ class BudgetRepository:
                 month_year=budget.month_year,
                 user_id=budget.user_id,
                 spent_in_budget=await get_spent(db, budget.id),
-                category_name=budget.category_name
+                category_name=category_name
             )
-
         except SQLAlchemyError as e:
             raise BudgetUpdateError(str(e))
 
