@@ -1,6 +1,8 @@
 import re
+from typing import Optional
 
 from fastapi_users import schemas
+from fastapi_users.schemas import BaseUser, BaseUserUpdate
 from pydantic import BaseModel, EmailStr, field_validator
 
 
@@ -30,22 +32,18 @@ class UserRead(schemas.BaseUser[int]):
     id: int
 
 
-class UserUpdate(schemas.BaseUserUpdate):
+class UserUpdate(BaseUserUpdate):
+    username: Optional[str] = None
 
-    @field_validator("password")
-    def validate_new_password(cls, value):
-        password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$"
-        if not re.match(password_regex, value):
-            raise ValueError(
-                "New password must be at least 8 characters long, include a lowercase letter, an uppercase letter, a digit, and a special character.")
+    @field_validator("username")
+    def validate_username(cls, value):
+        if not (3 <= len(value) <= 30):
+            raise ValueError("Username must be between 3 and 30 characters.")
         return value
 
 
-class UserResponse(BaseModel):
-    user_id: int
+class UserResponse(BaseUser):
     username: str
-    email: EmailStr
-    is_verified: bool
 
     class Config:
         from_attributes = True
