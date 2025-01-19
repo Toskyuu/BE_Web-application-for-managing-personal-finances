@@ -54,7 +54,7 @@ async def get_budget(budget_id: int,
 
 
 @budget_router.post("/budgets", response_model=list[BudgetUsage])
-async def list_budgets_by_user(
+async def list_budgets(
         budget: BudgetList,
         user: User = Depends(current_user),
         db: AsyncSession = Depends(get_db)
@@ -66,7 +66,7 @@ async def list_budgets_by_user(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@budget_router.put("/{budget_id}", response_model=Budget)
+@budget_router.patch("/{budget_id}", response_model=Budget)
 async def update_budget(budget_id: int,
                         budget_update: BudgetUpdate,
                         db: AsyncSession = Depends(get_db),

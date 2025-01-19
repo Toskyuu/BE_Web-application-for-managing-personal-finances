@@ -59,7 +59,7 @@ async def create_recurring_transaction(recurring_transaction: RecurringTransacti
     except UnauthorizedError as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-@recurring_transaction_router.put("/{recurring_transaction_id}", response_model=RecurringTransaction)
+@recurring_transaction_router.patch("/{recurring_transaction_id}", response_model=RecurringTransaction)
 async def update_recurring_transaction(recurring_transaction_id: int,
                                        recurring_transaction_update: RecurringTransactionUpdate,
                                        user: User = Depends(current_user),

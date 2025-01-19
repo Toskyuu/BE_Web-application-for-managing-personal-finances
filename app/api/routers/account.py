@@ -59,8 +59,8 @@ async def create_account(account: AccountCreate,
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@account_router.put("/{account_id}")
-async def update_account_initial_balance(
+@account_router.patch("/{account_id}")
+async def update_account(
         account_id: int,
         account_update: AccountUpdate,
         user: User = Depends(current_user),

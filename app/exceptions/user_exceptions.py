@@ -49,3 +49,7 @@ class UserDeleteError(UserError):
 class UserInvalidPassword(UserError):
     def __init__(self):
         super().__init__(f"Invalid user password")
+
+class UserUpdateError(UserError):
+    def __init__(self, message: str):
+        super().__init__(f"Failed to update user: {message}")

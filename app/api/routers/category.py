@@ -54,7 +54,7 @@ async def create_category(category: CategoryCreate,
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@category_router.put("/{category_id}")
+@category_router.patch("/{category_id}")
 async def update_category(category_id: int,
                           category_update: CategoryUpdate,
                           user: User = Depends(current_user),

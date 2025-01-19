@@ -16,7 +16,7 @@ class Transaction(Base):
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     account_id_2 = Column(Integer, ForeignKey("accounts.id"))
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     type = Column(Enum(TransactionType), nullable=False)
 
 

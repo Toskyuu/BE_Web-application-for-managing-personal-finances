@@ -2,7 +2,6 @@ import re
 from typing import Optional
 
 from fastapi_users import schemas
-from fastapi_users.schemas import BaseUser, BaseUserUpdate
 from pydantic import BaseModel, EmailStr, field_validator
 
 
@@ -32,8 +31,9 @@ class UserRead(schemas.BaseUser[int]):
     id: int
 
 
-class UserUpdate(BaseUserUpdate):
+class UserUpdate(BaseModel):
     username: Optional[str] = None
+    email: Optional[EmailStr] = None
 
     @field_validator("username")
     def validate_username(cls, value):
@@ -42,8 +42,11 @@ class UserUpdate(BaseUserUpdate):
         return value
 
 
-class UserResponse(BaseUser):
+class UserResponse(BaseModel):
     username: str
+    email: EmailStr
+    id: int
+    is_verified: bool
 
     class Config:
         from_attributes = True
