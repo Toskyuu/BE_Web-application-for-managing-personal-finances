@@ -58,3 +58,16 @@ class UserRepository:
             await db.rollback()
             raise UserDeleteError(str(e))
 
+    @staticmethod
+    async def get_user(db: AsyncSession, user_id: int) -> UserResponse:
+        result = await db.execute(select(User).filter(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            raise UserNotFoundError(user_id)
+        return UserResponse(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            is_verified=user.is_verified,
+        )
+

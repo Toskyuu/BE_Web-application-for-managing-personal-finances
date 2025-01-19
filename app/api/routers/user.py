@@ -31,7 +31,7 @@ user_router.include_router(
 )
 
 @user_router.patch("/me", response_model=UserResponse)
-async def user_update(user_to_update: UserUpdate, user: User = Depends(current_user),
+async def update_user(user_to_update: UserUpdate, user: User = Depends(current_user),
                       db: AsyncSession = Depends(get_db)):
     try:
         updated_user = await UserRepository.update_user(db, user_to_update, user_id=user.id)
@@ -43,7 +43,7 @@ async def user_update(user_to_update: UserUpdate, user: User = Depends(current_u
 
 
 @user_router.delete("/me")
-async def user_delete(user: User = Depends(current_user),
+async def delete_user(user: User = Depends(current_user),
                       db: AsyncSession = Depends(get_db)):
     try:
         await UserRepository.delete_user(db, user_id=user.id)
@@ -52,3 +52,14 @@ async def user_delete(user: User = Depends(current_user),
         raise HTTPException(status_code=404, detail=str(e))
     except UserDeleteError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@user_router.get("/me")
+async def get_user(user: User = Depends(current_user),
+                      db: AsyncSession = Depends(get_db)) -> UserResponse:
+    try:
+        response = await UserRepository.get_user(db, user_id=user.id)
+        return response
+    except UserNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
