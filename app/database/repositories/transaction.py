@@ -95,6 +95,12 @@ class TransactionRepository:
 
         account_alias_1 = aliased(Account)
         account_alias_2 = aliased(Account)
+        
+        sort_criteria = [sort_order(getattr(Transaction, filters.sort_by))]
+
+        if filters.sort_by == "transaction_date":
+            sort_criteria.append(sort_order(Transaction.id))
+            
 
         query = (
             select(
@@ -115,7 +121,7 @@ class TransactionRepository:
             .join(account_alias_1, account_alias_1.id == Transaction.account_id)
             .join(account_alias_2, account_alias_2.id == Transaction.account_id_2, isouter=True)
             .filter(and_(*conditions))
-            .order_by(sort_order(getattr(Transaction, filters.sort_by)))
+            .order_by(*sort_criteria)
             .offset(offset)
             .limit(filters.size)
         )

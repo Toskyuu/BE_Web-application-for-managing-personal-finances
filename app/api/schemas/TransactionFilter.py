@@ -3,7 +3,6 @@ from typing import Optional, List
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import field_validator
-
 from app.database.models.enums import TransactionType
 from app.database.models.transaction import Transaction
 
