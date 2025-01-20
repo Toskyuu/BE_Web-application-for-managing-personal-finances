@@ -28,13 +28,23 @@ class UserManager(BaseUserManager[User, int]):
         print(f"User {user.email} has registered.")
 
     async def on_after_request_verify(self, user: User, token: str, request=None):
-        await send_verification_email(user.email, "Potwierdź konto", f'To twój token - {token}')
+        await send_verification_email(
+            user.email,
+            "Potwierdź email",
+            f"Witaj {user.username},<br>"
+            f"To link do potwierdzenia konta w serwisie YourFinance - http://localhost:5173/confirm-email/?token={token},<br/>"
+            "Pozdrawiamy")
 
     async def on_after_forgot_password(
             self, user: User, token: str, request=None):
-        await send_verification_email(user.email, 'Zresetuj hasło', 'Jeśli to nie ty, to zignoruj tę wiadomość.')
-
-
+        await send_verification_email(
+            user.email,
+            "Zresetuj hasło",
+            f"Witaj {user.username},<br/>"
+            f"Jeśli chcesz zmienić swoje hasło w serwisie YourFinance kliknij w link - http://localhost:5173/reset-password/?token={token},<br/>"
+            "Jeśli to nie ty, to zignoruj tę wiadomość.<br/>"
+            "Pozdrawiamy"
+        )
 
 
 def get_user_manager(user_db=Depends(get_user_db)):
