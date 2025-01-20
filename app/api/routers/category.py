@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas import User
-from app.database.postgres_utils import get_db
 from app.api.schemas.Category import CategoryUpdate, CategoryCreate, Category, CategoryList
+from app.database.postgres_utils import get_db
 from app.database.repositories.category import CategoryRepository
 from app.database.repositories.user_manager import fastapi_users
 from app.exceptions.category_exceptions import CategoryCreationError, CategoryUserNotFoundError, CategoryNotFoundError, \
@@ -16,6 +16,7 @@ category_router = APIRouter(
 )
 
 current_user = fastapi_users.current_user()
+
 
 @category_router.post("/categories", response_model=list[Category])
 async def list_categories(
@@ -53,7 +54,7 @@ async def create_category(category: CategoryCreate,
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@category_router.put("/{category_id}")
+@category_router.patch("/{category_id}")
 async def update_category(category_id: int,
                           category_update: CategoryUpdate,
                           user: User = Depends(current_user),

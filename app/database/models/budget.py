@@ -9,7 +9,7 @@ class Budget(Base):
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     limit = Column(Float, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     month_year = Column(Date, nullable=False)
 
     category = relationship("Category", back_populates="budgets")

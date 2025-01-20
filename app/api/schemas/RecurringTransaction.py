@@ -87,8 +87,11 @@ class RecurringTransaction(BaseModel):
     description: Optional[str]
     amount: float
     category_id: int
+    category_name: str
     account_id: int
+    account_name: str
     account_id_2: Optional[int] = None
+    account_2_name: Optional[str] = None
     user_id: int
     start_date: Optional[dtdate] = None
     next_occurrence: Optional[dtdate] = None

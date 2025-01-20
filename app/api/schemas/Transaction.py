@@ -44,13 +44,17 @@ class TransactionUpdate(TransactionBase):
 class Transaction(BaseModel):
     id: int
     category_id: int
+    category_name: str
     account_id: int
+    account_name: str
     account_id_2: Optional[int] = None
+    account_2_name: Optional[str] = None
     user_id: int
     transaction_date: dtdate
     type: TransactionType
     amount: float
     description: str
+
 
     class Config:
         from_attributes = True

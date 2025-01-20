@@ -3,7 +3,6 @@ from typing import Optional, List
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from pydantic import field_validator
-
 from app.database.models.enums import TransactionType
 from app.database.models.transaction import Transaction
 
@@ -41,7 +40,7 @@ class TransactionFilter(Filter):
 
     @field_validator("sort_by")
     def validate_sort_by(cls, value):
-        if value and value not in ["transaction_date", "amount", "id"]:
+        if value and value not in ["id", "transaction_date", "amount"]:
             raise ValueError("You can only sort by id, transaction_date or amount")
         return value
 

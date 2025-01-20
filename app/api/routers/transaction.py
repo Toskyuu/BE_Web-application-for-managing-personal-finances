@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas import User
@@ -76,7 +75,7 @@ async def create_transaction(transaction: TransactionCreate,
         raise HTTPException(status_code=401, detail=str(e))
 
 
-@transaction_router.put("/{transaction_id}")
+@transaction_router.patch("/{transaction_id}", response_model=Transaction)
 async def update_transaction(transaction_id: int,
                              transaction_update: TransactionUpdate,
                              user: User = Depends(current_user),

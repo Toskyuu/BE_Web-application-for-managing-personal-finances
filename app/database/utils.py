@@ -38,8 +38,8 @@ async def get_spent(db: AsyncSession, budget_id: int) -> float:
         Transaction.category_id == budget.category_id,
         Transaction.user_id == budget.user_id,
         Transaction.type == TransactionType.OUTCOME,
-        func.extract("month", Transaction.date) == func.extract("month", budget.month_year),
-        func.extract("year", Transaction.date) == func.extract("year", budget.month_year),
+        func.extract("month", Transaction.transaction_date) == func.extract("month", budget.month_year),
+        func.extract("year", Transaction.transaction_date) == func.extract("year", budget.month_year),
     )
 
     result = await db.execute(spent_amount_query)
