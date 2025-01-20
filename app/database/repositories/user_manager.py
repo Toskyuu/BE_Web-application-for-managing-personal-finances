@@ -31,8 +31,8 @@ class UserManager(BaseUserManager[User, int]):
         await send_verification_email(
             user.email,
             "Potwierdź email",
-            f"Witaj {user.username},\n"
-            f"To twój token - http://localhost:5173/confirm-email/?token={token},<br/>"
+            f"Witaj {user.username},<br>"
+            f"To link do potwierdzenia konta w serwisie YourFinance - http://localhost:5173/confirm-email/?token={token},<br/>"
             "Pozdrawiamy")
 
     async def on_after_forgot_password(
@@ -41,7 +41,9 @@ class UserManager(BaseUserManager[User, int]):
             user.email,
             "Zresetuj hasło",
             f"Witaj {user.username},<br/>"
-            "Jeśli to nie ty, to zignoruj tę wiadomość."
+            f"Jeśli chcesz zmienić swoje hasło w serwisie YourFinance kliknij w link - http://localhost:5173/reset-password/?token={token},<br/>"
+            "Jeśli to nie ty, to zignoruj tę wiadomość.<br/>"
+            "Pozdrawiamy"
         )
 
 
