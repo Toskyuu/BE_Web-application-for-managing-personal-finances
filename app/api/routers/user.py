@@ -6,7 +6,7 @@ from app.api.schemas.User import UserCreate, UserRead, UserResponse, UserUpdate
 from app.database.postgres_utils import get_db
 from app.database.repositories.user import UserRepository
 from app.database.repositories.user_manager import fastapi_users
-from app.exceptions.user_exceptions import UserNotFoundError, UserDeleteError, UserUpdateError
+from app.exceptions.user_exceptions import UserNotFoundError, UserDeleteError, UserUpdateError, UserEmailExist
 from app.services.auth import auth_backend
 
 user_router = APIRouter(
@@ -14,7 +14,10 @@ user_router = APIRouter(
     tags=["Users"]
 )
 
+
+
 current_user = fastapi_users.current_user()
+current_active_verified_user = fastapi_users.current_user(active=True, verified=True)
 
 user_router.include_router(
     fastapi_users.get_auth_router(auth_backend, requires_verification=False),
@@ -31,7 +34,7 @@ user_router.include_router(
 )
 
 @user_router.patch("/me", response_model=UserResponse)
-async def update_user(user_to_update: UserUpdate, user: User = Depends(current_user),
+async def update_user(user_to_update: UserUpdate, user: User = Depends(current_active_verified_user),
                       db: AsyncSession = Depends(get_db)):
     try:
         updated_user = await UserRepository.update_user(db, user_to_update, user_id=user.id)
@@ -40,6 +43,8 @@ async def update_user(user_to_update: UserUpdate, user: User = Depends(current_u
         raise HTTPException(status_code=404, detail=str(e))
     except UserUpdateError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except UserEmailExist as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 
 @user_router.delete("/me")

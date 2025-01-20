@@ -53,3 +53,7 @@ class UserInvalidPassword(UserError):
 class UserUpdateError(UserError):
     def __init__(self, message: str):
         super().__init__(f"Failed to update user: {message}")
+
+class UserEmailExist(UserError):
+    def __init__(self, email: str):
+        super().__init__(f"User with email {email} already exist.")

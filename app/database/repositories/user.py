@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.User import UserResponse, UserUpdate
 from app.database.models.user import User
-from app.exceptions.user_exceptions import UserNotFoundError, UserDeleteError
+from app.exceptions.user_exceptions import UserNotFoundError, UserDeleteError, UserEmailExist
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -42,7 +42,13 @@ class UserRepository:
                 user.username = user_update.username
 
             if user_update.email:
-                user.email = user_update.email
+                user_2 = await db.execute(select(User).filter(User.email == user_update.email))
+                user_2 = user_2.scalar_one_or_none()
+                if user_2 is None:
+                    user.email = user_update.email
+                    user.is_verified = False
+                else:
+                    raise UserEmailExist(email=user_update.email)
 
             await db.commit()
             await db.refresh(user)
@@ -70,4 +76,3 @@ class UserRepository:
             email=user.email,
             is_verified=user.is_verified,
         )
-
