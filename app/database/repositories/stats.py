@@ -1,6 +1,6 @@
 from datetime import timedelta, date
 
-from sqlalchemy import func, select, case, literal_column, or_, and_
+from sqlalchemy import func, select, literal_column, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.stats import TransactionsOverTimeFilter, TransactionsOverTimeResponse, ExpenseComparisonItem
@@ -46,19 +46,14 @@ class StatsRepository:
             time_group = func.date_trunc('day', Transaction.transaction_date).label("time_group")
         elif filters.interval == Interval.YEARLY:
             time_group = func.date_trunc('year', Transaction.transaction_date).label("time_group")
-        else:  # MONTHLY
+        else:
             time_group = func.date_trunc('month', Transaction.transaction_date).label("time_group")
 
         expenses_case = func.sum(
             case(
                 (
-                    or_(
-                        Transaction.type == TransactionType.OUTCOME,
-                        and_(
-                            Transaction.type == TransactionType.INTERNAL,
-                            Transaction.account_id.in_(filters.account_id or [])
-                        )
-                    ),
+
+                    Transaction.type == TransactionType.OUTCOME,
                     Transaction.amount
                 ),
                 else_=0
@@ -68,54 +63,21 @@ class StatsRepository:
         incomes_case = func.sum(
             case(
                 (
-                    or_(
-                        Transaction.type == TransactionType.INCOME,
-                        and_(
-                            Transaction.type == TransactionType.INTERNAL,
-                            Transaction.account_id_2.in_(filters.account_id or [])
-                        )
-                    ),
+                    Transaction.type == TransactionType.INCOME,
                     Transaction.amount
                 ),
                 else_=0
             )
         ).label("incomes")
 
-        internal_case_expenses = func.sum(
-            case(
-                (
-                    Transaction.type == TransactionType.INTERNAL,
-                    Transaction.amount
-                ),
-                else_=0
-            )
-        ).label("internal_expenses")
-
-        internal_case_incomes = func.sum(
-            case(
-                (
-                    Transaction.type == TransactionType.INTERNAL,
-                    Transaction.amount
-                ),
-                else_=0
-            )
-        ).label("internal_incomes")
-
         query = select(
             time_group,
             expenses_case,
             incomes_case,
-            internal_case_expenses,
-            internal_case_incomes
-        ).where(Transaction.user_id == user_id)
+        )
 
         if filters.account_id:
-            query = query.where(
-                or_(
-                    Transaction.account_id.in_(filters.account_id),
-                    Transaction.account_id_2.in_(filters.account_id)
-                )
-            )
+            query = query.where(Transaction.account_id.in_(filters.account_id))
         if filters.category_id:
             query = query.where(Transaction.category_id.in_(filters.category_id))
         if filters.date_from:
@@ -125,18 +87,19 @@ class StatsRepository:
         if filters.type:
             query = query.where(Transaction.type.in_(filters.type))
 
+        query = query.where(Transaction.user_id == user_id)
         query = query.group_by(time_group).order_by(time_group)
-
         results = await db.execute(query)
         rows = results.fetchall()
+
 
         date_map = {date: {"expenses": 0, "incomes": 0} for date in dates}
 
         for row in rows:
             time_group = row.time_group.date()
             if time_group in date_map:
-                date_map[time_group]["expenses"] = row.expenses + row.internal_expenses
-                date_map[time_group]["incomes"] = row.incomes + row.internal_incomes
+                date_map[time_group]["expenses"] = row.expenses
+                date_map[time_group]["incomes"] = row.incomes
 
         data = [
             ExpenseComparisonItem(

@@ -1,3 +1,5 @@
+from operator import or_
+
 from sqlalchemy import asc, desc, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -80,7 +82,12 @@ class TransactionRepository:
 
         conditions = [Transaction.user_id == user_id]
         if filters.account_id:
-            conditions.append(Transaction.account_id.in_(filters.account_id))
+            conditions.append(
+                or_(
+                    Transaction.account_id.in_(filters.account_id),
+                    Transaction.account_id_2.in_(filters.account_id)
+                )
+            )
         if filters.category_id:
             conditions.append(Transaction.category_id.in_(filters.category_id))
         if filters.min_amount:
