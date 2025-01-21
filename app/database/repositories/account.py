@@ -8,8 +8,8 @@ from app.api.schemas.Account import AccountCreate, AccountUpdate
 from app.database.models.account import Account
 from app.database.models.user import User
 from app.exceptions.account_exceptions import AccountCreationError, AccountNotFoundError, AccountUpdateError, \
-    AccountUserNotFoundError, AccountDeleteError
-from app.exceptions.user_exceptions import UnauthorizedError
+    AccountDeleteError
+from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
 
 
 class AccountRepository:
@@ -38,7 +38,7 @@ class AccountRepository:
         result = await db.execute(select(User).filter(User.id == user_id))
         user = result.scalars().first()
         if not user:
-            raise AccountUserNotFoundError(user_id)
+            raise UserNotFoundError(user_id)
 
         if page and size:
             offset = (page - 1) * size
@@ -69,7 +69,7 @@ class AccountRepository:
             result = await db.execute(select(User).filter(User.id == user_id))
             user = result.scalars().first()
             if not user:
-                raise AccountUserNotFoundError(user_id)
+                raise UserNotFoundError(user_id)
 
             db_account = Account(**account.model_dump(), user_id=user_id)
             db.add(db_account)

@@ -10,10 +10,9 @@ from app.exceptions.account_exceptions import (
     AccountNotFoundError,
     AccountCreationError,
     AccountUpdateError,
-    AccountUserNotFoundError,
     AccountDeleteError
 )
-from app.exceptions.user_exceptions import UnauthorizedError
+from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
 
 account_router = APIRouter(
     prefix="/accounts",
@@ -31,7 +30,7 @@ async def list_accounts(
     try:
         return await AccountRepository.get_accounts_by_user(db, user_id=user.id, page=account.page, size=account.size,
                                                             sort_by=account.sort_by, order=account.order)
-    except AccountUserNotFoundError as e:
+    except UserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
@@ -55,7 +54,7 @@ async def create_account(account: AccountCreate,
         return await AccountRepository.create_account(db, account=account, user_id=user.id)
     except AccountCreationError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    except AccountUserNotFoundError as e:
+    except UserNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 

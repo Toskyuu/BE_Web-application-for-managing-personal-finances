@@ -6,9 +6,9 @@ from sqlalchemy.future import select
 from app.api.schemas.Category import CategoryUpdate, CategoryCreate
 from app.database.models.category import Category
 from app.database.models.user import User
-from app.exceptions.category_exceptions import CategoryNotFoundError, CategoryUserNotFoundError, CategoryCreationError, \
+from app.exceptions.category_exceptions import CategoryNotFoundError, CategoryCreationError, \
     CategoryUpdateError, CategoryDeleteError
-from app.exceptions.user_exceptions import UnauthorizedError
+from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
 
 
 class CategoryRepository:
@@ -39,7 +39,7 @@ class CategoryRepository:
         result = await db.execute(select(User).filter(User.id == user_id))
         user = result.scalars().first()
         if not user:
-            raise CategoryUserNotFoundError(user_id)
+            raise UserNotFoundError(user_id)
 
         if page and size:
             offset = (page - 1) * size
@@ -70,7 +70,7 @@ class CategoryRepository:
             result = await db.execute(select(User).filter(User.id == user_id))
             user = result.scalars().first()
             if not user:
-                raise CategoryUserNotFoundError(user_id)
+                raise UserNotFoundError(user_id)
 
             db_category = Category(**category.model_dump(), user_id=user_id)
             db.add(db_category)
