@@ -1,5 +1,6 @@
 from datetime import timedelta, date
 
+from dateutil.relativedelta import relativedelta
 from sqlalchemy import func, select, literal_column, case
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,17 +26,24 @@ class StatsRepository:
             if not user:
                 raise UserNotFoundError(user_id)
 
-            if filters.date_from and filters.date_to:
+            if not filters.date_from and not filters.date_to:
+                if filters.interval == Interval.MONTHLY:
+                    start_date = date.today() - relativedelta(months=12)
+                elif filters.interval == Interval.DAILY:
+                    start_date = date.today() - timedelta(days=7)
+                elif filters.interval == Interval.YEARLY:
+                    first_transaction = await db.execute(
+                        select(func.min(Transaction.transaction_date)).where(Transaction.user_id == user_id))
+                    start_date = first_transaction.scalar()
+
+                end_date = date.today()
+
+                filters.date_from = start_date
+                filters.date_to = end_date
+
+            else:
                 start_date = filters.date_from
                 end_date = filters.date_to
-            else:
-                first_transaction = await db.execute(
-                    select(func.min(Transaction.transaction_date)).where(Transaction.user_id == user_id))
-                last_transaction = await db.execute(
-                    select(func.max(Transaction.transaction_date)).where(Transaction.user_id == user_id))
-
-                start_date = first_transaction.scalar()
-                end_date = last_transaction.scalar()
 
             if filters.interval == Interval.MONTHLY:
                 months = [(start_date.year, start_date.month)]
@@ -54,7 +62,6 @@ class StatsRepository:
             else:
                 date_diff = (end_date - start_date).days
                 dates = [start_date + timedelta(days=i) for i in range(date_diff + 1)]
-
             if filters.interval == Interval.DAILY:
                 time_group = func.date_trunc('day', Transaction.transaction_date).label("time_group")
             elif filters.interval == Interval.YEARLY:
@@ -145,7 +152,7 @@ class StatsRepository:
             category_alias = aliased(Category)
 
             if not filters.date_from:
-                filters.date_from = date.today().replace(day=1)
+                filters.date_from = (date.today() - timedelta(days=7))
             if not filters.date_to:
                 filters.date_to = date.today()
             query = (
@@ -232,7 +239,7 @@ class StatsRepository:
                 raise UserNotFoundError(user_id)
 
             if not filters.date_from:
-                filters.date_from = date.today().replace(day=1)
+                filters.date_from = (date.today() - timedelta(days=7))
 
             if not filters.date_to:
                 filters.date_to = date.today()
@@ -306,8 +313,11 @@ class StatsRepository:
             if not user:
                 raise UserNotFoundError(user_id)
 
-            date_from = filters.date_from or date.today().replace(day=1)
-            date_to = filters.date_to or date.today()
+            if not filters.date_from:
+                filters.date_from = (date.today() - timedelta(days=7))
+
+            if not filters.date_to:
+                filters.date_to = date.today()
 
             query = (
                 select(
@@ -355,7 +365,8 @@ class StatsRepository:
             result = await db.execute(query)
             rows = result.fetchall()
 
-            full_dates = {date_from + timedelta(days=i) for i in range((date_to - date_from).days + 1)}
+            full_dates = {filters.date_from + timedelta(days=i) for i in
+                          range((filters.date_to - filters.date_from).days + 1)}
 
             cumulative_data = {}
             last_income = 0
@@ -401,8 +412,8 @@ class StatsRepository:
 
             return CumulativeResponse(
                 data=data,
-                start_date=date_from,
-                end_date=date_to,
+                start_date=filters.date_from,
+                end_date=filters.date_to,
             )
         except SQLAlchemyError as e:
             raise StatsError(str(e))
