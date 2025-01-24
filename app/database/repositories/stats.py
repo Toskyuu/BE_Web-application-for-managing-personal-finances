@@ -216,7 +216,7 @@ class StatsRepository:
             if filters.type:
                 returnType = filters.type
             else:
-                returnType = "Income"
+                returnType = "Outcome"
             return CategoriesSpentResponse(
                 data=summary_data,
                 start_date=filters.date_from,

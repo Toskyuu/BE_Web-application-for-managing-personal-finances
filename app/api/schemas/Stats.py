@@ -37,7 +37,7 @@ class BaseStatFilter(BaseModel):
     category_id: Optional[List[int]] = None
     date_from: Optional[dtdate] = None
     date_to: Optional[dtdate] = None
-    type: Optional[TransactionType] = "Income"
+    type: Optional[TransactionType] = "Outcome"
 
 
 class CategoriesSpentItem(BaseModel):
@@ -63,6 +63,7 @@ class SummaryResponse(BaseModel):
     income_count: int
     start_date: dtdate
     end_date: dtdate
+
 
 
 class CumulativeItem(BaseModel):
