@@ -17,3 +17,8 @@ class RecurringFrequency(str, enum.Enum):
     MONTHLY = "Monthly"
     BIWEEKLY = "Biweekly"
     DAILY = "Daily"
+
+class Interval(str, enum.Enum):
+    MONTHLY = "Monthly"
+    YEARLY = "Yearly"
+    DAILY = "Daily"

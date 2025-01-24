@@ -6,9 +6,9 @@ from app.api.schemas.Category import CategoryUpdate, CategoryCreate, Category, C
 from app.database.postgres_utils import get_db
 from app.database.repositories.category import CategoryRepository
 from app.database.repositories.user_manager import fastapi_users
-from app.exceptions.category_exceptions import CategoryCreationError, CategoryUserNotFoundError, CategoryNotFoundError, \
+from app.exceptions.category_exceptions import CategoryCreationError, CategoryNotFoundError, \
     CategoryUpdateError, CategoryDeleteError
-from app.exceptions.user_exceptions import UnauthorizedError
+from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
 
 category_router = APIRouter(
     prefix="/categories",
@@ -26,7 +26,7 @@ async def list_categories(
     try:
         return await CategoryRepository.get_categories_by_user(
             db, user_id=user.id, page=category.page, size=category.size, sort_by=category.sort_by, order=category.order)
-    except CategoryUserNotFoundError as e:
+    except UserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
@@ -50,7 +50,7 @@ async def create_category(category: CategoryCreate,
         return await CategoryRepository.create_category(db, category=category, user_id=user.id)
     except CategoryCreationError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    except CategoryUserNotFoundError as e:
+    except UserNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 

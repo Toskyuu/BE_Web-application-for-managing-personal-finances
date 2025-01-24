@@ -12,11 +12,12 @@ from app.database.models.enums import TransactionType
 from app.database.models.recurring_transaction import RecurringTransaction
 from app.database.models.user import User
 from app.database.utils import calculate_next_occurrence
+from app.exceptions.account_exceptions import AccountNotFoundError
+from app.exceptions.category_exceptions import CategoryNotFoundError
 from app.exceptions.recurring_transaction_exceptions import RecurringTransactionNotFoundError, \
-    RecurringTransactionUserNotFoundError, RecurringTransactionAccountNotFoundError, \
-    RecurringTransactionCategoryNotFoundError, RecurringTransactionCreationError, RecurringTransactionUpdateError, \
+    RecurringTransactionCreationError, RecurringTransactionUpdateError, \
     RecurringTransactionDeleteError
-from app.exceptions.user_exceptions import UnauthorizedError
+from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
 
 
 class RecurringTransactionRepository:
@@ -71,7 +72,7 @@ class RecurringTransactionRepository:
         user = await db.execute(select(User).filter(User.id == user_id))
         user = user.scalar_one_or_none()
         if not user:
-            raise RecurringTransactionUserNotFoundError(user_id)
+            raise UserNotFoundError(user_id)
 
         account_alias_1 = aliased(Account)
         account_alias_2 = aliased(Account)
@@ -111,15 +112,15 @@ class RecurringTransactionRepository:
             user = await db.execute(select(User).filter(User.id == user_id))
             user = user.scalar_one_or_none()
             if not user:
-                raise RecurringTransactionUserNotFoundError(user_id)
+                raise UserNotFoundError(user_id)
 
             account_1 = await db.execute(select(Account).filter(
                 Account.id == recurring_transaction.account_id))
             account_1 = account_1.scalar_one_or_none()
             if not account_1:
-                raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
+                raise AccountNotFoundError(recurring_transaction.account_id)
             if account_1.deleted is True:
-                raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
+                raise AccountNotFoundError(recurring_transaction.account_id)
             if account_1 is not None:
                 if account_1.user_id != user_id:
                     raise UnauthorizedError
@@ -128,9 +129,9 @@ class RecurringTransactionRepository:
                 Category.id == recurring_transaction.category_id))
             category = category.scalar_one_or_none()
             if not category:
-                raise RecurringTransactionCategoryNotFoundError(recurring_transaction.category_id)
+                raise CategoryNotFoundError(recurring_transaction.category_id)
             if category.deleted is True:
-                raise RecurringTransactionCategoryNotFoundError(recurring_transaction.category_id)
+                raise CategoryNotFoundError(recurring_transaction.category_id)
             if category is not None:
                 if category.user_id != user_id:
                     raise UnauthorizedError
@@ -140,9 +141,9 @@ class RecurringTransactionRepository:
                     Account.id == recurring_transaction.account_id_2))
                 account_2 = account_2.scalar_one_or_none()
                 if not account_2:
-                    raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id_2)
+                    raise AccountNotFoundError(recurring_transaction.account_id_2)
                 if account_2.deleted is True:
-                    raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id_2)
+                    raise AccountNotFoundError(recurring_transaction.account_id_2)
                 if account_2 is not None:
                     if account_2.user_id != user_id:
                         raise UnauthorizedError
@@ -200,9 +201,9 @@ class RecurringTransactionRepository:
                     Category.id == recurring_transaction_update.category_id))
                 category = category.scalar_one_or_none()
                 if not category:
-                    raise RecurringTransactionCategoryNotFoundError(recurring_transaction_update.category_id)
+                    raise CategoryNotFoundError(recurring_transaction_update.category_id)
                 if category.deleted is True:
-                    raise RecurringTransactionCategoryNotFoundError(recurring_transaction_update.category_id)
+                    raise CategoryNotFoundError(recurring_transaction_update.category_id)
                 if category.user_id != user_id:
                     raise UnauthorizedError
 
@@ -211,9 +212,9 @@ class RecurringTransactionRepository:
                     Account.id == recurring_transaction_update.account_id))
                 account = account.scalar_one_or_none()
                 if not account:
-                    raise RecurringTransactionAccountNotFoundError(recurring_transaction_update.account_id)
+                    raise AccountNotFoundError(recurring_transaction_update.account_id)
                 if account.deleted is True:
-                    raise RecurringTransactionAccountNotFoundError(recurring_transaction_update.account_id)
+                    raise AccountNotFoundError(recurring_transaction_update.account_id)
                 if account.user_id != user_id:
                     raise UnauthorizedError
 
@@ -222,9 +223,9 @@ class RecurringTransactionRepository:
                     Account.id == recurring_transaction_update.account_id_2))
                 account_2 = account_2.scalar_one_or_none()
                 if not account_2:
-                    raise RecurringTransactionAccountNotFoundError(recurring_transaction_update.account_id_2)
+                    raise AccountNotFoundError(recurring_transaction_update.account_id_2)
                 if account_2.deleted is True:
-                    raise RecurringTransactionAccountNotFoundError(recurring_transaction_update.account_id_2)
+                    raise AccountNotFoundError(recurring_transaction_update.account_id_2)
                 if account_2.user_id != user_id:
                     raise UnauthorizedError
 
@@ -284,7 +285,7 @@ class RecurringTransactionRepository:
             if account:
                 account.balance += amount_difference
             else:
-                raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
+                raise AccountNotFoundError(recurring_transaction.account_id)
 
         elif recurring_transaction.type == TransactionType.OUTCOME:
             account = await db.execute(select(Account).filter(Account.id == recurring_transaction.account_id))
@@ -292,7 +293,7 @@ class RecurringTransactionRepository:
             if account:
                 account.balance -= amount_difference
             else:
-                raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
+                raise AccountNotFoundError(recurring_transaction.account_id)
 
         elif recurring_transaction.type == TransactionType.INTERNAL:
             account_1 = await db.execute(select(Account).filter(Account.id == recurring_transaction.account_id))
@@ -304,9 +305,9 @@ class RecurringTransactionRepository:
                 account_1.balance -= amount_difference
                 account_2.balance += amount_difference
             if not account_1:
-                raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id)
+                raise AccountNotFoundError(recurring_transaction.account_id)
             if not account_2:
-                raise RecurringTransactionAccountNotFoundError(recurring_transaction.account_id_2)
+                raise AccountNotFoundError(recurring_transaction.account_id_2)
 
     @staticmethod
     async def delete_transaction(db: AsyncSession,

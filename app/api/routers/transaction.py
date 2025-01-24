@@ -7,10 +7,12 @@ from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.postgres_utils import get_db
 from app.database.repositories.transaction import TransactionRepository
 from app.database.repositories.user_manager import fastapi_users
-from app.exceptions.transaction_exceptions import TransactionUserNotFoundError, TransactionAccountNotFoundError, \
-    TransactionNotFoundError, TransactionCreationError, TransactionUpdateError, TransactionDeleteError, \
-    TransactionCategoryNotFoundError, TransactionPageSizeError, TransactionPageError
-from app.exceptions.user_exceptions import UnauthorizedError
+from app.exceptions.account_exceptions import AccountNotFoundError
+from app.exceptions.category_exceptions import CategoryNotFoundError
+from app.exceptions.transaction_exceptions import TransactionNotFoundError, TransactionCreationError, \
+    TransactionUpdateError, TransactionDeleteError, \
+    TransactionPageSizeError, TransactionPageError
+from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
 
 transaction_router = APIRouter(
     prefix="/transactions",
@@ -27,19 +29,18 @@ async def list_transactions(
         db: AsyncSession = Depends(get_db)
 ):
     try:
-        print( filters)
         return await TransactionRepository.list_transactions(
             db, filters, user_id=user.id
         )
-    except TransactionAccountNotFoundError as e:
+    except AccountNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except TransactionPageSizeError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except TransactionPageError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except TransactionUserNotFoundError as e:
+    except UserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except TransactionCategoryNotFoundError as e:
+    except CategoryNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except UnauthorizedError as e:
         raise HTTPException(status_code=401, detail=str(e))
@@ -65,11 +66,11 @@ async def create_transaction(transaction: TransactionCreate,
         return await TransactionRepository.create_transaction(db, transaction, user_id=user.id)
     except TransactionCreationError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    except TransactionUserNotFoundError as e:
+    except UserNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except TransactionAccountNotFoundError as e:
+    except AccountNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except TransactionCategoryNotFoundError as e:
+    except CategoryNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except UnauthorizedError as e:
         raise HTTPException(status_code=401, detail=str(e))
@@ -81,15 +82,16 @@ async def update_transaction(transaction_id: int,
                              user: User = Depends(current_user),
                              db: AsyncSession = Depends(get_db)):
     try:
-        updated_transaction = await TransactionRepository.update_transaction(db, transaction_id, transaction_update, user_id=user.id)
+        updated_transaction = await TransactionRepository.update_transaction(db, transaction_id, transaction_update,
+                                                                             user_id=user.id)
         return updated_transaction
     except TransactionNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except TransactionAccountNotFoundError as e:
+    except AccountNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except TransactionUpdateError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    except TransactionCategoryNotFoundError as e:
+    except CategoryNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except UnauthorizedError as e:
         raise HTTPException(status_code=401, detail=str(e))
@@ -104,7 +106,7 @@ async def delete_transaction(transaction_id: int,
         return {"message": "Transaction deleted successfully"}
     except TransactionNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except TransactionAccountNotFoundError as e:
+    except AccountNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except TransactionDeleteError as e:
         raise HTTPException(status_code=500, detail=str(e))

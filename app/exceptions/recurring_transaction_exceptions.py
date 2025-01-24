@@ -8,22 +8,6 @@ class RecurringTransactionNotFoundError(RecurringTransactionError):
         super().__init__(f"Recurring transaction with ID {recurring_transaction_id} not found.")
 
 
-class RecurringTransactionUserNotFoundError(RecurringTransactionError):
-    def __init__(self, user_id: int):
-        self.user_id = user_id
-        super().__init__(f"User with ID {user_id} not found.")
-
-
-class RecurringTransactionAccountNotFoundError(RecurringTransactionError):
-    def __init__(self, account_id: int):
-        self.account_id = account_id
-        super().__init__(f"Account with ID {account_id} not found.")
-
-class RecurringTransactionCategoryNotFoundError(RecurringTransactionError):
-            def __init__(self, category_id: int):
-                self.category_id = category_id
-                super().__init__(f"Category with ID {category_id} not found.")
-
 class RecurringTransactionFrequencyNotFound(RecurringTransactionError):
     def __init__(self, frequency: str):
         super().__init__(f"Frequency: {frequency} not found")

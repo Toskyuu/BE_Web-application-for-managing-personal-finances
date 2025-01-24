@@ -8,9 +8,10 @@ from app.database.models.budget import Budget as BudgetModel
 from app.database.models.category import Category
 from app.database.models.user import User
 from app.database.utils import get_spent
-from app.exceptions.budget_exceptions import BudgetNotFoundError, BudgetUserNotFoundError, BudgetCreationError, \
-    BudgetUpdateError, BudgetDeleteError, BudgetCategoryNotFoundError
-from app.exceptions.user_exceptions import UnauthorizedError
+from app.exceptions.budget_exceptions import BudgetNotFoundError, BudgetCreationError, \
+    BudgetUpdateError, BudgetDeleteError
+from app.exceptions.category_exceptions import CategoryNotFoundError
+from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
 
 
 class BudgetRepository:
@@ -52,7 +53,7 @@ class BudgetRepository:
         user = await db.execute(select(User).filter(User.id == user_id))
         user = user.scalars().first()
         if not user:
-            raise BudgetUserNotFoundError(user_id)
+            raise UserNotFoundError(user_id)
 
         result = await db.execute(
             select(BudgetModel, Category.name.label("category_name"))
@@ -91,13 +92,13 @@ class BudgetRepository:
             user = await db.execute(select(User).filter(User.id == user_id))
             user = user.scalars().first()
             if not user:
-                raise BudgetUserNotFoundError(user_id)
+                raise UserNotFoundError(user_id)
             category = await db.execute(select(Category).filter(Category.id == budget.category_id))
             category = category.scalars().first()
             if not category:
-                raise BudgetCategoryNotFoundError(budget.category_id)
+                raise CategoryNotFoundError(budget.category_id)
             if category.deleted is True:
-                raise BudgetCategoryNotFoundError(budget.category_id)
+                raise CategoryNotFoundError(budget.category_id)
             if category.user_id != user_id:
                 raise UnauthorizedError
 
@@ -132,10 +133,10 @@ class BudgetRepository:
                 category = category.scalars().first()
 
                 if not category:
-                    raise BudgetCategoryNotFoundError(budget_update.category_id)
+                    raise CategoryNotFoundError(budget_update.category_id)
 
                 if category.deleted is True:
-                    raise BudgetCategoryNotFoundError(budget.category_id)
+                    raise CategoryNotFoundError(budget.category_id)
 
                 if category.user_id != user_id:
                     raise UnauthorizedError

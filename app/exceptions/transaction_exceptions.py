@@ -8,22 +8,6 @@ class TransactionNotFoundError(TransactionError):
         super().__init__(f"Transaction with ID {transaction_id} not found.")
 
 
-class TransactionUserNotFoundError(TransactionError):
-    def __init__(self, user_id: int):
-        self.user_id = user_id
-        super().__init__(f"User with ID {user_id} not found.")
-
-
-class TransactionAccountNotFoundError(TransactionError):
-    def __init__(self):
-        super().__init__(f"Accounts not found.")
-
-
-class TransactionCategoryNotFoundError(TransactionError):
-    def __init__(self):
-        super().__init__(f"Categories not found.")
-
-
 class TransactionCreationError(TransactionError):
     def __init__(self, message: str):
         super().__init__(f"Failed to create transaction: {message}")

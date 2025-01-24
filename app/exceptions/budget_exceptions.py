@@ -6,18 +6,9 @@ class BudgetNotFoundError(BudgetError):
         self.budget_id = budget_id
         super().__init__(f"Budget with ID {budget_id} not found.")
 
-class BudgetUserNotFoundError(BudgetError):
-    def __init__(self, user_id: int):
-        self.user_id = user_id
-        super().__init__(f"User with ID {user_id} not found.")
-
 class BudgetCreationError(BudgetError):
     def __init__(self, message: str):
         super().__init__(f"Failed to create budget: {message}")
-
-class BudgetCategoryNotFoundError(BudgetError):
-    def __init__(self, category_id: int):
-        super().__init__(f"Category with ID {category_id} not found.")
 
 class BudgetUpdateError(BudgetError):
     def __init__(self, message: str):

@@ -7,13 +7,13 @@ from app.database.postgres_utils import get_db
 from app.database.repositories.budget import BudgetRepository
 from app.database.repositories.user_manager import fastapi_users
 from app.exceptions.budget_exceptions import (
-    BudgetUserNotFoundError,
     BudgetNotFoundError,
     BudgetCreationError,
     BudgetUpdateError,
-    BudgetDeleteError, BudgetCategoryNotFoundError
+    BudgetDeleteError
 )
-from app.exceptions.user_exceptions import UnauthorizedError
+from app.exceptions.category_exceptions import CategoryNotFoundError
+from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
 
 budget_router = APIRouter(
     prefix="/budgets",
@@ -32,9 +32,9 @@ async def create_budget(budget: BudgetCreate,
         return await BudgetRepository.create_budget(db, budget, user_id=user.id)
     except BudgetCreationError as e:
         raise HTTPException(status_code=500, detail=str(e))
-    except BudgetUserNotFoundError as e:
+    except UserNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except BudgetCategoryNotFoundError as e:
+    except CategoryNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except UnauthorizedError as e:
         raise HTTPException(status_code=401, detail=str(e))
@@ -62,7 +62,7 @@ async def list_budgets(
     try:
         return await BudgetRepository.get_budgets_by_user(
             db, user_id=user.id, page=budget.page, size=budget.size, sort_by=budget.sort_by, order=budget.order)
-    except BudgetUserNotFoundError as e:
+    except UserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 
@@ -81,7 +81,7 @@ async def update_budget(budget_id: int,
         raise HTTPException(status_code=500, detail=str(e))
     except UnauthorizedError as e:
         raise HTTPException(status_code=401, detail=str(e))
-    except BudgetCategoryNotFoundError as e:
+    except CategoryNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @budget_router.delete("/{budget_id}")
