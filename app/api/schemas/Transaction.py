@@ -1,5 +1,5 @@
 from datetime import date as dtdate
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, field_validator
 
@@ -62,4 +62,9 @@ class Transaction(BaseModel):
 class TransactionResponse(BaseModel):
     transaction: Transaction
     recurring_frequency: Optional[RecurringFrequency]
+
+class TransactionListResponse(BaseModel):
+    transactions: List[Transaction]
+    current_page: int
+    total_pages: int
 

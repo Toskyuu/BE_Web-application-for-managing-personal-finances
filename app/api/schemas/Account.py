@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, field_validator
 
@@ -63,3 +63,8 @@ class Account(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AccountListResponse(BaseModel):
+    accounts: List[Account]
+    current_page: int
+    total_pages: int

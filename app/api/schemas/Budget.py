@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, field_validator
 
@@ -81,3 +81,9 @@ class Budget(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class BudgetListResponse(BaseModel):
+    budgets: List[BudgetUsage]
+    current_page: int
+    total_pages: int

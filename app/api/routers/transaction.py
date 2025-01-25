@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas import User
-from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate, TransactionResponse
+from app.api.schemas.Transaction import TransactionUpdate, Transaction, TransactionCreate, TransactionResponse, \
+    TransactionListResponse
 from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.postgres_utils import get_db
 from app.database.repositories.transaction import TransactionRepository
@@ -22,7 +23,7 @@ transaction_router = APIRouter(
 current_user = fastapi_users.current_user()
 
 
-@transaction_router.post("/transactions", response_model=list[Transaction])
+@transaction_router.post("/transactions", response_model=TransactionListResponse)
 async def list_transactions(
         filters: TransactionFilter,
         user: User = Depends(current_user),

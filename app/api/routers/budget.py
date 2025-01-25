@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas import User
-from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage, BudgetList
+from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, Budget, BudgetUsage, BudgetList, BudgetListResponse
 from app.database.postgres_utils import get_db
 from app.database.repositories.budget import BudgetRepository
 from app.database.repositories.user_manager import fastapi_users
@@ -53,7 +53,7 @@ async def get_budget(budget_id: int,
         raise HTTPException(status_code=401, detail=str(e))
 
 
-@budget_router.post("/budgets", response_model=list[BudgetUsage])
+@budget_router.post("/budgets", response_model=BudgetListResponse)
 async def list_budgets(
         budget: BudgetList,
         user: User = Depends(current_user),

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas import User
 from app.api.schemas.RecurringTransaction import RecurringTransactionUpdate, RecurringTransaction, \
-    RecurringTransactionCreate, RecurringTransactionList
+    RecurringTransactionCreate, RecurringTransactionList, RecurringTransactionListResponse
 from app.database.postgres_utils import get_db
 from app.database.repositories.recurring_transaction import RecurringTransactionRepository
 from app.database.repositories.user_manager import fastapi_users
@@ -21,7 +21,7 @@ recurring_transaction_router = APIRouter(
 current_user = fastapi_users.current_user()
 
 
-@recurring_transaction_router.post("/recurring-transactions", response_model=list[RecurringTransaction])
+@recurring_transaction_router.post("/recurring-transactions", response_model=RecurringTransactionListResponse)
 async def list_recurring_transactions(
         recurring_transaction: RecurringTransactionList,
         user: User = Depends(current_user),

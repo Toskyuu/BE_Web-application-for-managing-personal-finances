@@ -1,9 +1,9 @@
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.schemas.Account import Account as AccountSchema
+from app.api.schemas.Account import Account as AccountSchema, AccountListResponse
 from app.api.schemas.Account import AccountCreate, AccountUpdate
 from app.database.models.account import Account
 from app.database.models.user import User
@@ -27,12 +27,14 @@ class AccountRepository:
         return account
 
     @staticmethod
-    async def get_accounts_by_user(db: AsyncSession,
-                                   user_id: int,
-                                   page: int,
-                                   size: int,
-                                   sort_by: str,
-                                   order: str):
+    async def get_accounts_by_user(
+            db: AsyncSession,
+            user_id: int,
+            page: int,
+            size: int,
+            sort_by: str,
+            order: str
+    ) -> AccountListResponse:
         sort_order = asc if order == "asc" else desc
 
         result = await db.execute(select(User).filter(User.id == user_id))
@@ -40,28 +42,48 @@ class AccountRepository:
         if not user:
             raise UserNotFoundError(user_id)
 
-        if page and size:
-            offset = (page - 1) * size
-            result = await db.execute(
-                select(Account)
-                .filter(
-                    Account.user_id == user_id,
-                    Account.deleted == False
-                )
-                .order_by(sort_order(getattr(Account, sort_by)))
-                .offset(offset)
-                .limit(size)
+        total_count = await db.scalar(
+            select(func.count(Account.id))
+            .filter(Account.user_id == user_id, Account.deleted == False)
+        )
+        if total_count == 0:
+            return AccountListResponse(
+                accounts=[],
+                current_page=1,
+                total_pages=0
             )
-        else:
+
+        if page <= 0 or size <= 0:
             result = await db.execute(
                 select(Account)
-                .filter(
-                    Account.user_id == user_id,
-                    Account.deleted == False
-                )
-                .order_by(sort_order(getattr(Account, sort_by))))
+                .filter(Account.user_id == user_id, Account.deleted == False)
+                .order_by(sort_order(getattr(Account, sort_by)))
+            )
+            accounts = result.scalars().all()
+            return AccountListResponse(
+                accounts=accounts,
+                current_page=1,
+                total_pages=1
+            )
 
-        return result.scalars().all()
+        total_pages = (total_count + size - 1) // size
+
+        offset = (page - 1) * size
+        result = await db.execute(
+            select(Account)
+            .filter(Account.user_id == user_id, Account.deleted == False)
+            .order_by(sort_order(getattr(Account, sort_by)))
+            .offset(offset)
+            .limit(size)
+        )
+
+        accounts = result.scalars().all()
+
+        return AccountListResponse(
+            accounts=accounts,
+            current_page=page,
+            total_pages=total_pages
+        )
 
     @staticmethod
     async def create_account(db: AsyncSession, account: AccountCreate, user_id: int) -> AccountSchema:

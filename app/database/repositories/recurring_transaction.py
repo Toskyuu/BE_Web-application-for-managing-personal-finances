@@ -1,11 +1,11 @@
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased
 
 from app.api.schemas.RecurringTransaction import RecurringTransactionCreate, RecurringTransactionUpdate, \
-    RecurringTransaction as RecurringTransactionSchema
+    RecurringTransaction as RecurringTransactionSchema, RecurringTransactionListResponse
 from app.database.models.account import Account
 from app.database.models.category import Category
 from app.database.models.enums import TransactionType
@@ -65,14 +65,21 @@ class RecurringTransactionRepository:
             size: int,
             sort_by: str,
             order: str
-    ):
-        offset = (page - 1) * size
+    ) -> RecurringTransactionListResponse:
         sort_order = asc if order == "asc" else desc
 
         user = await db.execute(select(User).filter(User.id == user_id))
         user = user.scalar_one_or_none()
         if not user:
             raise UserNotFoundError(user_id)
+
+
+        total_transactions_count = await db.scalar(
+            select(func.count()).filter(RecurringTransaction.user_id == user_id)
+        )
+        total_pages = max(1, (total_transactions_count + size - 1) // size)
+
+        offset = (page - 1) * size
 
         account_alias_1 = aliased(Account)
         account_alias_2 = aliased(Account)
@@ -102,8 +109,13 @@ class RecurringTransactionRepository:
             .offset(offset)
             .limit(size)
         )
+        transactions = result.all()
 
-        return result.all()
+        return RecurringTransactionListResponse(
+            recurring_transactions=transactions,
+            current_page=page,
+            total_pages=total_pages
+        )
 
     @staticmethod
     async def create_recurring_transaction(db: AsyncSession, recurring_transaction: RecurringTransactionCreate,
