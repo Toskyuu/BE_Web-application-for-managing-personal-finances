@@ -5,7 +5,7 @@ from pydantic import BaseModel, field_validator
 
 
 class BudgetBase(BaseModel):
-    limit: int
+    limit: float
     month_year: date
     category_id: int
 
@@ -18,7 +18,7 @@ class BudgetBase(BaseModel):
     @field_validator("limit")
     def validate_limit(cls, value):
         if value < 0:
-            raise ValueError("Limit should be greater than or equal to 0")
+            raise ValueError("Limit should be greater than 0")
         return value
 
 
@@ -27,7 +27,7 @@ class BudgetCreate(BudgetBase):
 
 
 class BudgetUpdate(BudgetBase):
-    limit: Optional[int] = None
+    limit: Optional[float] = None
     month_year: Optional[date] = None
     category_id: Optional[int] = None
 
@@ -72,7 +72,7 @@ class BudgetList(BaseModel):
 
 class Budget(BaseModel):
     id: int
-    limit: int
+    limit: float
     month_year: date
     category_id: int
     user_id: int

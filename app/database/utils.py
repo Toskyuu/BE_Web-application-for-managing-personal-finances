@@ -45,4 +45,5 @@ async def get_spent(db: AsyncSession, budget_id: int) -> float:
     result = await db.execute(spent_amount_query)
     spent_amount = result.scalar() or 0.0
 
+
     return spent_amount

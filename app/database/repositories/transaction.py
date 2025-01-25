@@ -327,9 +327,9 @@ class TransactionRepository:
                 account_1.balance -= amount_difference
                 account_2.balance += amount_difference
             if not account_1:
-                raise AccountNotFoundError()
+                raise AccountNotFoundError(account_id=transaction.account_id)
             if not account_2:
-                raise AccountNotFoundError()
+                raise AccountNotFoundError(account_id=transaction.account_id)
 
     @staticmethod
     async def delete_transaction(db: AsyncSession, transaction_id: int, user_id: int) -> bool:
