@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.schemas.Category import CategoryUpdate, CategoryCreate
+from app.api.schemas.Category import CategoryUpdate, CategoryCreate, CategoryListResponse
 from app.database.models.category import Category
 from app.database.models.user import User
 from app.exceptions.category_exceptions import CategoryNotFoundError, CategoryCreationError, \
@@ -33,7 +33,7 @@ class CategoryRepository:
             size: int,
             sort_by: str,
             order: str
-    ):
+    ) -> CategoryListResponse:
         sort_order = asc if order == "asc" else desc
 
         result = await db.execute(select(User).filter(User.id == user_id))
@@ -41,28 +41,48 @@ class CategoryRepository:
         if not user:
             raise UserNotFoundError(user_id)
 
-        if page and size:
-            offset = (page - 1) * size
-            result = await db.execute(
-                select(Category).
-                filter(
-                    Category.user_id == user_id,
-                    Category.deleted == False
-                )
-                .order_by(sort_order(getattr(Category, sort_by)))
-                .offset(offset)
-                .limit(size)
+        total_categories_query = await db.execute(
+            select(Category).filter(
+                Category.user_id == user_id,
+                Category.deleted == False
             )
-        else:
-            result = await db.execute(
-                select(Category).
-                filter(
-                    Category.user_id == user_id,
-                    Category.deleted == False
-                )
-                .order_by(sort_order(getattr(Category, sort_by))))
+        )
+        total_categories_count = len(total_categories_query.scalars().all())
 
-        return result.scalars().all()
+        if page <= 0 or size <= 0:
+            result = await db.execute(
+                select(Category)
+                .filter(Category.user_id == user_id, Category.deleted == False)
+                .order_by(sort_order(getattr(Category, sort_by)))
+            )
+            categories = result.scalars().all()
+            return CategoryListResponse(
+                categories=categories,
+                current_page=1,
+                total_pages=1
+            )
+
+        total_pages = max(1, (total_categories_count + size - 1) // size)
+
+        offset = (page - 1) * size
+        result = await db.execute(
+            select(Category)
+            .filter(
+                Category.user_id == user_id,
+                Category.deleted == False
+            )
+            .order_by(sort_order(getattr(Category, sort_by)))
+            .offset(offset)
+            .limit(size)
+        )
+
+        categories = result.scalars().all()
+
+        return CategoryListResponse(
+            categories=categories,
+            current_page=page,
+            total_pages=total_pages
+        )
 
     @staticmethod
     async def create_category(db: AsyncSession, category: CategoryCreate, user_id: int):

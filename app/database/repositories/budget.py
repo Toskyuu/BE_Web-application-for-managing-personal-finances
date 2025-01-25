@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, BudgetUsage
+from app.api.schemas.Budget import BudgetCreate, BudgetUpdate, BudgetUsage, BudgetListResponse
 from app.database.models.budget import Budget as BudgetModel
 from app.database.models.category import Category
 from app.database.models.user import User
@@ -46,7 +46,7 @@ class BudgetRepository:
             size: int,
             sort_by: str,
             order: str
-    ) -> list[BudgetUsage]:
+    ) -> BudgetListResponse:
         offset = (page - 1) * size
         sort_order = asc if order == "asc" else desc
 
@@ -54,6 +54,11 @@ class BudgetRepository:
         user = user.scalars().first()
         if not user:
             raise UserNotFoundError(user_id)
+
+        total_budgets_query = await db.execute(
+            select(BudgetModel).filter(BudgetModel.user_id == user_id)
+        )
+        total_budgets_count = len(total_budgets_query.scalars().all())
 
         result = await db.execute(
             select(BudgetModel, Category.name.label("category_name"))
@@ -67,6 +72,8 @@ class BudgetRepository:
             .limit(size)
         )
         budgets = result.fetchall()
+
+        total_pages = max(1, (total_budgets_count + size - 1) // size)
 
         budgets_with_spent = [
             BudgetUsage(
@@ -84,7 +91,11 @@ class BudgetRepository:
         if sort_by == "spent_in_budget":
             budgets_with_spent.sort(key=lambda x: x.spent_in_budget, reverse=(order == "desc"))
 
-        return budgets_with_spent
+        return BudgetListResponse(
+            budgets=budgets_with_spent,
+            current_page=page,
+            total_pages=total_pages
+        )
 
     @staticmethod
     async def create_budget(db: AsyncSession, budget: BudgetCreate, user_id: int) -> BudgetUsage:

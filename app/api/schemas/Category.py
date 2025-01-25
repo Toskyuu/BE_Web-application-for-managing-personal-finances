@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, field_validator
 
@@ -57,3 +57,8 @@ class Category(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CategoryListResponse(BaseModel):
+    categories: List[Category]
+    current_page: int
+    total_pages: int

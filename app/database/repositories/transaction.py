@@ -1,12 +1,13 @@
 from operator import or_
 
-from sqlalchemy import asc, desc, and_
+from sqlalchemy import asc, desc, and_, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import aliased
 
-from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate, Transaction as TransactionSchema
+from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate, Transaction as TransactionSchema, \
+    TransactionListResponse
 from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.models.account import Account
 from app.database.models.category import Category
@@ -53,12 +54,13 @@ class TransactionRepository:
             raise UnauthorizedError
         return transaction
 
+
     @staticmethod
     async def list_transactions(
             db: AsyncSession,
             filters: TransactionFilter,
             user_id: int
-    ):
+    ) -> TransactionListResponse:
         offset = (filters.page - 1) * filters.size
         sort_order = asc if filters.order == "asc" else desc
 
@@ -134,7 +136,21 @@ class TransactionRepository:
         )
 
         result = await db.execute(query)
-        return result.all()
+
+        total_transactions_query = await db.execute(
+            select(func.count()).filter(and_(*conditions))
+        )
+        total_transactions_count = total_transactions_query.scalar()
+
+        total_pages = max(1, (total_transactions_count + filters.size - 1) // filters.size)
+
+        transactions = result.all()
+
+        return TransactionListResponse(
+            transactions=transactions,
+            current_page=filters.page,
+            total_pages=total_pages
+        )
 
     @staticmethod
     async def update_transaction(db: AsyncSession,

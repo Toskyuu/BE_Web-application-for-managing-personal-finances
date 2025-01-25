@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas import User
-from app.api.schemas.Account import Account, AccountCreate, AccountUpdate, AccountList
+from app.api.schemas.Account import Account, AccountCreate, AccountUpdate, AccountList, AccountListResponse
 from app.database.postgres_utils import get_db
 from app.database.repositories.account import AccountRepository
 from app.database.repositories.user_manager import fastapi_users
@@ -22,7 +22,7 @@ account_router = APIRouter(
 current_user = fastapi_users.current_user()
 
 
-@account_router.post("/accounts", response_model=list[Account])
+@account_router.post("/accounts", response_model=AccountListResponse)
 async def list_accounts(
         account: AccountList,
         user: User = Depends(current_user),
