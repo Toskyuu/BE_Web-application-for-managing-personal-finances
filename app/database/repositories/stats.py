@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.api.schemas.Stats import TransactionsOverTimeFilter, TransactionsOverTimeResponse, ExpenseComparisonItem, \
-    CategoriesSpentResponse, CategoriesSpentItem, SummaryResponse, BaseStatFilter, CumulativeResponse, CumulativeItem
+    CategoriesSpentResponse, CategoriesSpentItem, SummaryResponse, CumulativeResponse, CumulativeItem, BaseStatFilter
 from app.database.models.category import Category
 from app.database.models.enums import Interval, TransactionType
 from app.database.models.transaction import Transaction
@@ -26,24 +26,24 @@ class StatsRepository:
             if not user:
                 raise UserNotFoundError(user_id)
 
-            if not filters.date_from and not filters.date_to:
+            if not filters.date_to:
+                filters.date_to = date.today()
+                end_date = filters.date_to
+            else:
+                end_date = filters.date_to
+
+            if not filters.date_from:
                 if filters.interval == Interval.MONTHLY:
-                    start_date = date.today() - relativedelta(months=12)
+                    start_date = end_date - relativedelta(months=12)
                 elif filters.interval == Interval.DAILY:
-                    start_date = date.today() - timedelta(days=7)
+                    start_date = end_date - timedelta(days=7)
                 elif filters.interval == Interval.YEARLY:
                     first_transaction = await db.execute(
                         select(func.min(Transaction.transaction_date)).where(Transaction.user_id == user_id))
                     start_date = first_transaction.scalar()
-
-                end_date = date.today()
-
                 filters.date_from = start_date
-                filters.date_to = end_date
-
             else:
                 start_date = filters.date_from
-                end_date = filters.date_to
 
             if filters.interval == Interval.MONTHLY:
                 months = [(start_date.year, start_date.month)]
@@ -151,10 +151,11 @@ class StatsRepository:
 
             category_alias = aliased(Category)
 
-            if not filters.date_from:
-                filters.date_from = (date.today() - timedelta(days=7))
             if not filters.date_to:
                 filters.date_to = date.today()
+            if not filters.date_from:
+                filters.date_from = (filters.date_to - timedelta(days=7))
+
             query = (
                 select(
                     category_alias.name.label("category"),
@@ -238,11 +239,10 @@ class StatsRepository:
             if not user:
                 raise UserNotFoundError(user_id)
 
-            if not filters.date_from:
-                filters.date_from = (date.today() - timedelta(days=7))
-
             if not filters.date_to:
                 filters.date_to = date.today()
+            if not filters.date_from:
+                filters.date_from = (filters.date_to - timedelta(days=7))
 
             query = (
                 select(
@@ -313,11 +313,10 @@ class StatsRepository:
             if not user:
                 raise UserNotFoundError(user_id)
 
-            if not filters.date_from:
-                filters.date_from = (date.today() - timedelta(days=7))
-
             if not filters.date_to:
                 filters.date_to = date.today()
+            if not filters.date_from:
+                filters.date_from = (filters.date_to - timedelta(days=7))
 
             query = (
                 select(
