@@ -7,13 +7,14 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import aliased
 
 from app.api.schemas.Transaction import TransactionUpdate, TransactionCreate, Transaction as TransactionSchema, \
-    TransactionListResponse
+    TransactionListResponse, TransactionResponse
 from app.api.schemas.TransactionFilter import TransactionFilter
 from app.database.models.account import Account
 from app.database.models.category import Category
 from app.database.models.enums import TransactionType, RecurringFrequency
 from app.database.models.transaction import Transaction
 from app.database.models.user import User
+from app.database.utils import get_spent_by_transaction_params
 from app.exceptions.account_exceptions import AccountNotFoundError
 from app.exceptions.category_exceptions import CategoryNotFoundError
 from app.exceptions.transaction_exceptions import TransactionNotFoundError, \
@@ -53,7 +54,6 @@ class TransactionRepository:
         if transaction.user_id != user_id:
             raise UnauthorizedError
         return transaction
-
 
     @staticmethod
     async def list_transactions(
@@ -156,7 +156,7 @@ class TransactionRepository:
     async def update_transaction(db: AsyncSession,
                                  transaction_id: int,
                                  transaction_update: TransactionUpdate,
-                                 user_id: int) -> Transaction:
+                                 user_id: int) -> TransactionResponse:
         try:
             result = await db.execute(select(Transaction).filter(Transaction.id == transaction_id))
             transaction = result.scalars().first()
@@ -230,7 +230,26 @@ class TransactionRepository:
                 .join(account_alias_2, account_alias_2.id == Transaction.account_id_2, isouter=True)
                 .filter(Transaction.id == transaction_id))
 
-            return result.first()
+            transaction_result = result.first()
+
+            if transaction_result.type == TransactionType.OUTCOME:
+                spent_in_budget = await get_spent_by_transaction_params(
+                    db=db,
+                    user_id=user_id,
+                    category_id=transaction_result.category_id,
+                    month=transaction_result.transaction_date.month,
+                    year=transaction_result.transaction_date.year,
+                )
+            else:
+                spent_in_budget = None
+
+            transaction_response = TransactionResponse(
+                transaction=transaction_result,
+                recurring_frequency=None,
+                spent_in_budget=spent_in_budget
+            )
+
+            return transaction_response
 
         except SQLAlchemyError as e:
             await db.rollback()
@@ -269,30 +288,43 @@ class TransactionRepository:
             db.add(new_transaction)
             await db.commit()
 
+            if transaction.type == TransactionType.OUTCOME:
+                spent_in_budget = await get_spent_by_transaction_params(
+                    db=db,
+                    user_id=user_id,
+                    category_id=transaction.category_id,
+                    month=new_transaction.transaction_date.month,
+                    year=new_transaction.transaction_date.year,
+                )
+            else:
+                spent_in_budget = None
+
             recurring_frequency = await TransactionRepository.detect_recurring_transactions(
                 db=db,
                 transaction=new_transaction,
                 user_id=user_id
             )
-            transaction = TransactionSchema(
-                id=new_transaction.id,
-                description=new_transaction.description,
-                category_id=new_transaction.category_id,
-                account_id=new_transaction.account_id,
-                account_id_2=new_transaction.account_id_2 if new_transaction.type == TransactionType.INTERNAL else None,
-                user_id=user_id,
-                transaction_date=new_transaction.transaction_date,
-                type=new_transaction.type,
-                amount=new_transaction.amount,
-                category_name=category.name,
-                account_name=account_1.name,
-                account_2_name=account_2.name if new_transaction.type == TransactionType.INTERNAL else None
+            transaction_response = TransactionResponse(
+                transaction=TransactionSchema(
+                    id=new_transaction.id,
+                    description=new_transaction.description,
+                    category_id=new_transaction.category_id,
+                    account_id=new_transaction.account_id,
+                    account_id_2=new_transaction.account_id_2 if new_transaction.type == TransactionType.INTERNAL else None,
+                    user_id=user_id,
+                    transaction_date=new_transaction.transaction_date,
+                    type=new_transaction.type,
+                    amount=new_transaction.amount,
+                    category_name=category.name,
+                    account_name=account_1.name,
+                    account_2_name=account_2.name if new_transaction.type == TransactionType.INTERNAL else None
+                ),
+                recurring_frequency=recurring_frequency,
+                spent_in_budget=spent_in_budget
             )
 
-            if recurring_frequency:
-                return {"transaction": transaction, "recurring_frequency": recurring_frequency}
+            return transaction_response
 
-            return {"transaction": transaction, "recurring_frequency": None}
 
         except SQLAlchemyError as e:
             await db.rollback()
@@ -385,14 +417,40 @@ class TransactionRepository:
             raise TransactionCreationError(str(e))
 
     @staticmethod
-    async def detect_recurring_transactions(db: AsyncSession, transaction: Transaction, user_id: int):
-        tolerance_days = 3
-        cycle_map = {
-            1: RecurringFrequency.DAILY,
-            7: RecurringFrequency.WEEKLY,
-            14: RecurringFrequency.BIWEEKLY,
-            30: RecurringFrequency.MONTHLY
-        }
+    async def detect_recurring_transactions(
+            db: AsyncSession, transaction: Transaction, user_id: int
+    ):
+        def get_week_number(date_obj):
+            return date_obj.isocalendar()[1]
+
+        def is_cycle_matched(transaction_dates, cycle):
+
+            if cycle == "daily":
+                return all(
+                    (transaction_dates[i] - transaction_dates[i - 1]).days == 1
+                    for i in range(1, len(transaction_dates))
+                )
+            elif cycle == "weekly":
+                return all(
+                    get_week_number(transaction_dates[i])
+                    == get_week_number(transaction_dates[i - 1]) + 1
+                    for i in range(1, len(transaction_dates))
+                )
+            elif cycle == "biweekly":
+                return all(
+                    get_week_number(transaction_dates[i])
+                    == get_week_number(transaction_dates[i - 1]) + 2
+                    for i in range(1, len(transaction_dates))
+                )
+            elif cycle == "monthly":
+                return all(
+                    transaction_dates[i].month == (transaction_dates[i - 1].month + 1) % 12
+                    and transaction_dates[i].year
+                    == transaction_dates[i - 1].year
+                    + (1 if transaction_dates[i - 1].month == 12 else 0)
+                    for i in range(1, len(transaction_dates))
+                )
+            return False
 
         past_transactions = await db.execute(
             select(Transaction)
@@ -402,23 +460,26 @@ class TransactionRepository:
                 Transaction.account_id == transaction.account_id,
                 Transaction.type == transaction.type,
                 Transaction.amount == transaction.amount,
-                Transaction.transaction_date <= transaction.transaction_date
+                Transaction.transaction_date <= transaction.transaction_date,
             )
+            .order_by(Transaction.transaction_date)
         )
         past_transactions = past_transactions.scalars().all()
 
         if len(past_transactions) < 3:
             return None
 
-        date_diffs = []
-        for i in range(1, len(past_transactions)):
-            diff = (past_transactions[i].transaction_date - past_transactions[i - 1].transaction_date).days
-            date_diffs.append(diff)
+        transaction_dates = [t.transaction_date for t in past_transactions]
+
+        cycle_map = {
+            "daily": RecurringFrequency.DAILY,
+            "weekly": RecurringFrequency.WEEKLY,
+            "biweekly": RecurringFrequency.BIWEEKLY,
+            "monthly": RecurringFrequency.MONTHLY,
+        }
 
         for cycle, frequency in cycle_map.items():
-            matches_cycle = all(
-                abs(diff - cycle) <= tolerance_days for diff in date_diffs[-3:]
-            )
-            if matches_cycle:
+            if is_cycle_matched(transaction_dates[-3:], cycle):
                 return frequency
+
         return None

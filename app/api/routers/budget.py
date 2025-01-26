@@ -61,9 +61,13 @@ async def list_budgets(
 ):
     try:
         return await BudgetRepository.get_budgets_by_user(
-            db, user_id=user.id, page=budget.page, size=budget.size, sort_by=budget.sort_by, order=budget.order)
+            db, user_id=user.id, page=budget.page, size=budget.size, sort_by=budget.sort_by, order=budget.order, month_year=budget.month_year, category_id=budget.category_id)
     except UserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except UnauthorizedError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except CategoryNotFoundError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @budget_router.patch("/{budget_id}", response_model=Budget)
