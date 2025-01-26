@@ -37,6 +37,7 @@ class BudgetUsage(BudgetBase):
     user_id: int
     spent_in_budget: float
     category_name: str
+    spent_to_limit_ratio: Optional[float]
 
 
 class BudgetList(BaseModel):
@@ -45,7 +46,7 @@ class BudgetList(BaseModel):
     sort_by: Optional[str] = "month_year"
     order: Optional[str] = "asc"
     month_year: Optional[date] = None
-    category_id: Optional[int] = None
+    category_id: Optional[List[int]] = None
 
     @field_validator("page")
     def validate_page(cls, value):
@@ -67,8 +68,8 @@ class BudgetList(BaseModel):
 
     @field_validator("sort_by")
     def validate_sort_by(cls, value):
-        if value and value not in ["month_year", "limit", "spent_in_budget"]:
-            raise ValueError("You can only sort by month_year, limit or spent_in_budget")
+        if value and value not in ["month_year", "limit", "spent_to_limit_ratio", "spent_in_budget"]:
+            raise ValueError("You can only sort by month_year, limit, spent_to_limit_ratio or spent_in_budget")
         return value
 
 

@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import asc, desc, func
 from sqlalchemy.exc import SQLAlchemyError
@@ -50,7 +50,7 @@ class BudgetRepository:
             sort_by: str,
             order: str,
             month_year: Optional[date] = None,
-            category_id: Optional[int] = None,
+            category_id: Optional[List[int]] = None,
     ) -> BudgetListResponse:
         offset = (page - 1) * size
         sort_order = asc if order == "asc" else desc
@@ -68,31 +68,34 @@ class BudgetRepository:
             )
 
         if category_id:
-            category = await db.execute(select(Category).filter(Category.id == category_id))
-            category = category.scalars().first()
+            result = await db.execute(select(Category).filter(Category.id.in_(category_id)))
+            categories = result.scalars().all()
+            if not categories:
+                raise CategoryNotFoundError
+            for category in categories:
+                if category.user_id != user_id:
+                    raise UnauthorizedError
+            query = query.filter(BudgetModel.category_id.in_(category_id))
 
-            if not category:
-                raise CategoryNotFoundError(category_id)
-            if category.user_id != user_id:
-                raise UnauthorizedError
-            query = query.filter(BudgetModel.category_id == category.id)
-
-
-        total_budgets_count = await db.execute(
+        total_budgets_count_query = (
             select(func.count(BudgetModel.id))
-            .filter(BudgetModel.month_year == month_year)
-            .filter(BudgetModel.category_id == category_id).
-            filter(BudgetModel.user_id == user_id)
+            .filter(BudgetModel.user_id == user_id)
         )
+        if month_year:
+            total_budgets_count_query = total_budgets_count_query.filter(
+                func.to_char(BudgetModel.month_year, 'YYYY-MM') == func.to_char(month_year, 'YYYY-MM')
+            )
+        if category_id:
+            total_budgets_count_query = total_budgets_count_query.filter(BudgetModel.category_id.in_(category_id))
 
-        total_budgets_count = total_budgets_count.scalars().first()
+        total_budgets_count = (await db.execute(total_budgets_count_query)).scalars().first()
 
         result = await db.execute(
             query
             .join(Category, BudgetModel.category_id == Category.id)
             .order_by(
                 sort_order(getattr(BudgetModel, sort_by))
-                if sort_by != "spent_in_budget" else None
+                if sort_by not in ["spent_in_budget", "spent_to_limit_ratio"] else None
             )
             .offset(offset)
             .limit(size)
@@ -109,20 +112,35 @@ class BudgetRepository:
                 month_year=budget.month_year,
                 user_id=budget.user_id,
                 spent_in_budget=await get_spent(db, budget.id),
-                category_name=category_name
+                category_name=category_name,
+                spent_to_limit_ratio=round((await get_spent(db, budget.id)) / budget.limit * 100.00, 2) if budget.limit else 0
             )
             for budget, category_name in budgets
         ]
 
-        if sort_by == "spent_in_budget":
-            budgets_with_spent.sort(key=lambda x: x.spent_in_budget, reverse=(order == "desc"))
+        if sort_by == "spent_to_limit_ratio":
+            budgets_with_spent.sort(
+                key=lambda x: x.spent_to_limit_ratio,
+                reverse=(order == "desc")
+            )
+        elif sort_by == "spent_in_budget":
+            budgets_with_spent.sort(
+                key=lambda x: x.spent_in_budget,
+                reverse=(order == "desc")
+            )
+        else:
+            sort_expression = getattr(BudgetModel, sort_by, None)
+            if sort_expression is not None:
+                budgets_with_spent.sort(
+                    key=lambda x: getattr(x, sort_by),
+                    reverse=(order == "desc")
+                )
 
         return BudgetListResponse(
             budgets=budgets_with_spent,
             current_page=page,
             total_pages=total_pages
         )
-
 
     @staticmethod
     async def create_budget(db: AsyncSession, budget: BudgetCreate, user_id: int) -> BudgetUsage:
@@ -156,7 +174,6 @@ class BudgetRepository:
 
         except SQLAlchemyError as e:
             raise BudgetCreationError(str(e))
-
 
     @staticmethod
     async def update_budget(
@@ -206,7 +223,6 @@ class BudgetRepository:
             )
         except SQLAlchemyError as e:
             raise BudgetUpdateError(str(e))
-
 
     @staticmethod
     async def delete_budget(db: AsyncSession, budget_id: int, user_id: int) -> bool:
