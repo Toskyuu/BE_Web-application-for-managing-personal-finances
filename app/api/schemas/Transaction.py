@@ -62,6 +62,7 @@ class Transaction(BaseModel):
 class TransactionResponse(BaseModel):
     transaction: Transaction
     recurring_frequency: Optional[RecurringFrequency]
+    spent_in_budget: Optional[float]
 
 class TransactionListResponse(BaseModel):
     transactions: List[Transaction]
