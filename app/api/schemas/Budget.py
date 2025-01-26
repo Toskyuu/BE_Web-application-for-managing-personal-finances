@@ -44,6 +44,8 @@ class BudgetList(BaseModel):
     size: Optional[int] = 10
     sort_by: Optional[str] = "month_year"
     order: Optional[str] = "asc"
+    month_year: Optional[date] = None
+    category_id: Optional[int] = None
 
     @field_validator("page")
     def validate_page(cls, value):
