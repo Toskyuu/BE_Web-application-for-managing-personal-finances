@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routers import user, account, category, transaction, budget, recurring_transaction, stats
+from app.api.routers import user, account, category, transaction, budget, recurring_transaction, stats, dashboard
 from app.database.postgres_utils import get_db
 from app.services.scheduler import RecurringTransactionScheduler
 
@@ -39,5 +39,6 @@ app.include_router(transaction.transaction_router)
 app.include_router(budget.budget_router)
 app.include_router(recurring_transaction.recurring_transaction_router)
 app.include_router(stats.stats_router)
+app.include_router(dashboard.dashboard_router)
 
 
