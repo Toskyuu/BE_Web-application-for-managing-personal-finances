@@ -20,7 +20,7 @@ dashboard_router = APIRouter(
 current_user = fastapi_users.current_user()
 
 
-@dashboard_router.post("/dashboard", response_model=Dashboard)
+@dashboard_router.get("/dashboard", response_model=Dashboard)
 async def dashboard(
         user: User = Depends(current_user),
         db: AsyncSession = Depends(get_db)
