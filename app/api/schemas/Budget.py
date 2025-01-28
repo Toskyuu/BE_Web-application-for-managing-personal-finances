@@ -37,7 +37,7 @@ class BudgetUsage(BudgetBase):
     user_id: int
     spent_in_budget: float
     category_name: str
-    spent_to_limit_ratio: Optional[float]
+    spent_to_limit_ratio: Optional[float] = None
 
 
 class BudgetList(BaseModel):
@@ -81,6 +81,8 @@ class Budget(BaseModel):
     user_id: int
     spent_in_budget: Optional[float] = None
     category_name: str
+    spent_to_limit_ratio: Optional[float] = None
+
 
     class Config:
         from_attributes = True

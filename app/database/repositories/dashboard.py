@@ -23,6 +23,7 @@ class DashboardRepository:
         incomes_expenses_filter = BaseStatFilter(
             date_from=first_day_of_month,
             date_to=today,
+            type=None,
         )
         transaction_filter = TransactionFilter(
             page=1,
@@ -43,7 +44,7 @@ class DashboardRepository:
         incomes_expenses_summary_response = await StatsRepository.summary(db, incomes_expenses_filter, user_id=user_id)
 
         transactions_response = await TransactionRepository.list_transactions(db, transaction_filter, user_id=user_id)
-        budgets_response = await BudgetRepository.get_budgets_by_user(db, user_id=user_id, page=1, size=10, month_year=date.today(), sort_by="id", order="desc")
+        budgets_response = await BudgetRepository.get_budgets_by_user(db, user_id=user_id, page=1, size=7, month_year=date.today(), sort_by="spent_to_limit_ratio", order="desc")
         expenses_response= await StatsRepository.summary_by_time(db, transaction_over_time_filter, user_id=user_id)
 
         return Dashboard(
