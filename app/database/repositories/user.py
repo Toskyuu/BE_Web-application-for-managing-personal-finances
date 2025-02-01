@@ -44,10 +44,10 @@ class UserRepository:
             if user_update.email:
                 user_2 = await db.execute(select(User).filter(User.email == user_update.email))
                 user_2 = user_2.scalar_one_or_none()
-                if user_2 is None:
+                if user_2 is None or user_2.id != user_id:
                     user.email = user_update.email
                     user.is_verified = False
-                else:
+                elif user_2 and user_2.id != user_id:
                     raise UserEmailExist(email=user_update.email)
 
             await db.commit()
