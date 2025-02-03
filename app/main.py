@@ -8,6 +8,7 @@ from app.database.postgres_utils import get_db
 from app.services.scheduler import RecurringTransactionScheduler
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async for db in get_db():
@@ -22,7 +23,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan, debug=True)
 origins = [
     "http://localhost:5173",
+    "http://localhost:4173",
 ]
+
 
 app.add_middleware(
     CORSMiddleware,

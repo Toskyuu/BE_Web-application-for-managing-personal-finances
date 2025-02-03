@@ -1,0 +1,3260 @@
+{
+	"info": {
+		"_postman_id": "06ae1518-75e3-4f93-9298-b1a2f54abe2d",
+		"name": "YourFinance API Tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38809989"
+	},
+	"item": [
+		{
+			"name": "Create",
+			"item": [
+				{
+					"name": "Create Categories (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"description\":\"wihout name\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Categories (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"Test Category\",\"description\":\"description\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Categories (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains category ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"id\");",
+									"    pm.collectionVariables.set(\"category_id\", jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"Test Category\",\"description\":\"description\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Account (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"\",\"initial_balance\":-100.0,\"type\":\"invalid_type\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/accounts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Account (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains account ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"id\");",
+									"    pm.collectionVariables.set(\"account_id\", jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"Test Account\",\"initial_balance\":100.0,\"type\":\"Savings\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/accounts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Account (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"Test Account\",\"initial_balance\":100.0,\"type\":\"Savings\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/accounts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Transaction (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"\",\"initial_balance\":-100.0,\"type\":\"invalid_type\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Transaction (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains transaction ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"transaction\").to.have.property(\"id\");",
+									"    pm.collectionVariables.set(\"transaction_id\", jsonData.transaction.id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"description\":\"Test Transaction\",\"amount\":100.0,\"transaction_date\":\"2025-02-03\",\"category_id\": {{category_id}},\"account_id\": {{account_id}},\"type\":\"Income\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Transaction (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"description\":\"Test Transaction\",\"amount\":100.0,\"transaction_date\":\"2025-02-03\",\"category_id\": {{category_id}},\"account_id\": {{account_id}},\"type\":\"Income\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Budget (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"limit\":100,\"month_year\":-100.0,\"category_id\":\"invalid_type\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/budgets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Budget (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains Budget ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"id\");",
+									"    pm.collectionVariables.set(\"budgets_id\", jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"limit\":100,\"month_year\":\"2025-02-03\",\"category_id\": {{category_id}}}"
+						},
+						"url": {
+							"raw": "{{base_url}}/budgets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Budget (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"limit\":100,\"month_year\":\"2025-02-03\",\"category_id\": {{category_id}}}"
+						},
+						"url": {
+							"raw": "{{base_url}}/budgets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Recurring-transaction (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"\",\"initial_balance\":-100.0,\"type\":\"invalid_type\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Recurring-transaction (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains Recurring-transaction ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"id\");",
+									"    pm.collectionVariables.set(\"recurring-transaction_id\", jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"description\": \"Opis\",\r\n  \"amount\": 10,\r\n  \"recurring_frequency\": \"Weekly\",\r\n  \"start_date\": \"2025-02-03\",\r\n  \"next_occurrence\": \"2025-02-03\",\r\n  \"category_id\": {{category_id}},\r\n  \"account_id\": {{account_id}},\r\n  \"type\": \"Income\"\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Recurring-transaction (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"description\": \"Opis\",\r\n  \"amount\": 10,\r\n  \"recurring_frequency\": \"Weekly\",\r\n  \"start_date\": \"2025-02-03\",\r\n  \"next_occurrence\": \"2025-02-03\",\r\n  \"category_id\": {{category_id}},\r\n  \"account_id\": {{account_id}},\r\n  \"type\": \"Income\"\r\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Get",
+			"item": [
+				{
+					"name": "Get Account (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains correct account data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.equal(pm.collectionVariables.get(\"account_id\"));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/accounts/{{account_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"packages": {},
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/accounts/{{account_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account (Invalid Account ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/accounts/1000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"1000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Category (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains correct category data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.equal(pm.collectionVariables.get(\"category_id\"));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Category (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Category (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/categories/1000000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"1000000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains correct transaction data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.equal(pm.collectionVariables.get(\"transaction_id\"));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/transactions/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"{{transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/transactions/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"{{transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction (Invalid ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/transactions/1000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"1000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Budget (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains correct Budget data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.equal(pm.collectionVariables.get(\"budgets_id\"));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/budgets/{{budgets_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"{{budgets_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Budget (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/budgets/{{budgets_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"{{budgets_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Budget (Invalid ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/budgets/10000000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"10000000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Recurring-transaction (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains correct Recurring-transaction data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.equal(pm.collectionVariables.get(\"recurring-transaction_id\"));",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/{{recurring-transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"{{recurring-transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Recurring-transaction (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/{{recurring-transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"{{recurring-transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Recurring-transaction (Invalid ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/1000000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"1000000"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "List",
+			"item": [
+				{
+					"name": "List Accounts (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"id\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/accounts/accounts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Accounts (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"id\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/accounts/accounts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Categories (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"id\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Categories (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"id\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Transactions (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"id\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions/transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Transactions (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"id\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions/transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Budgets (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"limit\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/budgets/budgets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"budgets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Budgets (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"limit\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/budgets/budgets",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"budgets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Recurring-transactions (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"id\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/recurring-transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"recurring-transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Recurring-transactions (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"page\":1,\"size\":10,\"sort_by\":\"id\",\"order\":\"asc\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/recurring-transactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"recurring-transactions"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Update",
+			"item": [
+				{
+					"name": "Update Account (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains updated data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.name).to.equal(\"Updated Account Name\");",
+									"    pm.expect(jsonData.initial_balance).to.equal(200.0);",
+									"    pm.expect(jsonData.type).to.equal(\"Checking\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"Updated Account Name\",\"initial_balance\":200.0,\"type\":\"Checking\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/accounts/{{account_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Account (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"Updated Account Name\",\"initial_balance\":200.0,\"type\":\"checking\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/accounts/{{account_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Account (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"\",\"initial_balance\":-50.0,\"type\":\"invalid_type\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/accounts/{{account_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Categories (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains updated data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.name).to.equal(\"Updated category name\");",
+									"    pm.expect(jsonData.description).to.equal(\"Updated description\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"Updated category name\",\"description\":\"Updated description\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Categories (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":\"Uptaded category name\",\"description\":\"Updated description\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Categories (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"name\":123,\"type\":\"Updated type\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Transaction (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains updated data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.transaction.description).to.equal(\"Updated Transaction\");",
+									"    pm.expect(jsonData.transaction.amount).to.equal(150.0);",
+									"    pm.expect(jsonData.transaction.transaction_date).to.equal(\"2025-02-04\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"description\":\"Updated Transaction\",\"amount\":150.0,\"transaction_date\":\"2025-02-04\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"{{transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Transaction (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"description\":\"Updated Transaction\",\"amount\":150.0,\"transaction_date\":\"2025-02-04\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"{{transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Transaction (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"account_id\":\"awsds\",\"type\":\"invalid_type\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"{{transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Budget (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains updated data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.limit).to.equal(200);",
+									"    pm.expect(jsonData.month_year).to.equal(\"2025-03-03\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"limit\":200,\"month_year\":\"2025-03-03\",\"category_id\": {{category_id}}}"
+						},
+						"url": {
+							"raw": "{{base_url}}/budgets/{{budgets_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"{{budgets_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Budget (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"limit\":200,\"month_year\":\"2025-03-03\",\"category_id\": {{category_id}}}"
+						},
+						"url": {
+							"raw": "{{base_url}}/budgets/{{budgets_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"{{budgets_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Budget (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"month_year\":543,\"category_id\":\"sad\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/budgets/{{budgets_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"{{budgets_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Recurring-transaction (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"Response contains updated data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.amount).to.equal(200);",
+									"    pm.expect(jsonData.description).to.equal(\"Updated description\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"amount\":200,\"description\":\"Updated description\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/{{recurring-transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"{{recurring-transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Recurring-transaction (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"amount\":200,\"description\":\"Updated description\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/{{recurring-transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"{{recurring-transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Recurring-transaction (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"pm.test(\"Response contains validation errors\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"detail\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"month_year\":543,\"category_id\":\"sad\"}"
+						},
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/{{recurring-transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"{{recurring-transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Delete",
+			"item": [
+				{
+					"name": "Delete Account (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/accounts/{{account_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Account (Invalid Account ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/accounts/1000000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"1000000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Account (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/accounts/{{account_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"accounts",
+								"{{account_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Categories (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Categories (Invalid Data)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/categories/1000000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"1000000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Categories (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"{{category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Transaction (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/transactions/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"{{transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Transaction (Invalid ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/transactions/100000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"100000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Transaction (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/transactions/{{transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"transactions",
+								"{{transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Budget (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/budgets/{{budgets_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"{{budgets_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Budget (Invalid ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/budgets/100000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"100000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Budget (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/budgets/{{budgets_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"budgets",
+								"{{budgets_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Recurring-transaction (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"pm.test(\"Unauthorized access\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.equal(\"Unauthorized\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer invalid_token"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/{{recurring-transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"{{recurring-transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Recurring-transaction (Invalid ID)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/100000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"100000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Recurring-transaction (Authorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/recurring-transactions/{{recurring-transaction_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"recurring-transactions",
+								"{{recurring-transaction_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "inherit"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNiIsImF1ZCI6WyJmYXN0YXBpLXVzZXJzOmF1dGgiXSwiZXhwIjoxNzM4NjMwNTE5fQ.Kw_74xFSH-MUZX2MVtV_Fk5kP7H_H1D5EHUSdtSt2UI",
+			"type": "string"
+		},
+		{
+			"key": "account_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "category_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "transaction_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "budgets_id",
+			"value": ""
+		},
+		{
+			"key": "recurring-transaction_id",
+			"value": ""
+		}
+	]
+}

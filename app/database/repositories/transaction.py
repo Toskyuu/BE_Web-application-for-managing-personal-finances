@@ -16,7 +16,7 @@ from app.database.models.transaction import Transaction
 from app.database.models.user import User
 from app.database.utils import get_spent_by_transaction_params
 from app.exceptions.account_exceptions import AccountNotFoundError
-from app.exceptions.category_exceptions import CategoryNotFoundError
+from app.exceptions.category_exceptions import CategoryNotFoundError, CategoriesNotFoundError
 from app.exceptions.transaction_exceptions import TransactionNotFoundError, \
     TransactionCreationError, TransactionUpdateError, TransactionDeleteError
 from app.exceptions.user_exceptions import UnauthorizedError, UserNotFoundError
@@ -77,7 +77,7 @@ class TransactionRepository:
             result = await db.execute(select(Category).filter(Category.id.in_(filters.category_id)))
             categories = result.scalars().all()
             if not categories:
-                raise CategoryNotFoundError
+                raise CategoriesNotFoundError
             for category in categories:
                 if category.user_id != user_id:
                     raise UnauthorizedError
@@ -170,9 +170,9 @@ class TransactionRepository:
                     select(Category).filter(Category.id == transaction_update.category_id))
                 category = category_result.scalars().first()
                 if category is None:
-                    raise CategoryNotFoundError()
+                    raise CategoryNotFoundError(category_id=transaction_update.category_id)
                 if category.deleted is True:
-                    raise CategoryNotFoundError()
+                    raise CategoryNotFoundError(category_id=transaction_update.category_id)
                 if category.user_id != user_id:
                     raise UnauthorizedError
 
@@ -268,9 +268,9 @@ class TransactionRepository:
             category_result = await db.execute(select(Category).filter(Category.id == transaction.category_id))
             category = category_result.scalars().first()
             if not category:
-                raise CategoryNotFoundError()
+                raise CategoryNotFoundError(category_id=transaction.category_id)
             if category.deleted is True:
-                raise CategoryNotFoundError()
+                raise CategoryNotFoundError(category_id=transaction.category_id)
             if category.user_id != user_id:
                 raise UnauthorizedError
 
@@ -398,7 +398,7 @@ class TransactionRepository:
             category_result = await db.execute(select(Category).filter(Category.id == transaction.category_id))
             category = category_result.scalars().first()
             if not category:
-                raise CategoryNotFoundError()
+                raise CategoryNotFoundError(category_id=transaction.category_id)
 
             if transaction.type == TransactionType.INTERNAL:
                 account_2_result = await db.execute(select(Account).filter(Account.id == transaction.account_id_2))
