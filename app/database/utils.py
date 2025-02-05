@@ -18,8 +18,9 @@ from app.exceptions.user_exceptions import UnauthorizedError
 
 def calculate_next_occurrence(rt_frequency: RecurringFrequency, rt_date: date = None) -> date:
     base_date = rt_date or date.today()
-
-    if rt_frequency == RecurringFrequency.DAILY:
+    if rt_date >= date.today():
+        return rt_date
+    elif rt_frequency == RecurringFrequency.DAILY:
         return base_date + relativedelta(days=+1)
     elif rt_frequency == RecurringFrequency.WEEKLY:
         return base_date + relativedelta(weeks=+1)
