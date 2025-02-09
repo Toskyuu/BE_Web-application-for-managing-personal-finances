@@ -20,12 +20,6 @@ class UserCreate(schemas.BaseUserCreate):
                 "Password must be at least 8 characters long, include a lowercase letter, an uppercase letter, a digit, and a special character.")
         return value
 
-    @field_validator("username")
-    def validate_username(cls, value):
-        if not (3 <= len(value) <= 30):
-            raise ValueError("Username must be between 3 and 30 characters.")
-        return value
-
 
 class UserRead(schemas.BaseUser[int]):
     id: int
@@ -34,12 +28,6 @@ class UserRead(schemas.BaseUser[int]):
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
-
-    @field_validator("username")
-    def validate_username(cls, value):
-        if not (3 <= len(value) <= 30):
-            raise ValueError("Username must be between 3 and 30 characters.")
-        return value
 
 
 class UserResponse(BaseModel):
